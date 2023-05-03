@@ -31,12 +31,14 @@
 
 import argparse
 import glob
+from math import sqrt
 from run_experiments import print_mapf_instance
 from run_experiments import import_mapf_instance
 
 CONNECTION1 = "always_connected"
 CONNECTION2 = "distance"
 CONNECTION3 = "distance_and_obstacles"
+DEFAULT_DISTANCE = 2
 
 GOALS_CHOICE1 = "random"
 GOALS_CHOICE2 = "minimum_distance"
@@ -44,13 +46,14 @@ GOALS_CHOICE2 = "minimum_distance"
 GOAL_ASSIGNMENT1 = "random"
 GOAL_ASSIGNMENT2 = "minimize_start-goal_distance"
 
-def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition):
+def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_used):
     are_connected = False
 
     if connection_definition == CONNECTION1:
         are_connected = True
     elif connection_definition == CONNECTION2:
-        are_connected = False
+        if (sqrt((x2 - x1)**2 + (y2 - y1)**2)) <= distance_used:
+            are_connected = True
     elif connection_definition == CONNECTION3:
         are_connected = False
     else:
@@ -58,7 +61,7 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition):
     
     return are_connected
 
-def get_connectivity_graph(map,  connection_definition):
+def get_connectivity_graph(map,  connection_definition, distance_used):
     connectivity_graph = {}
 
     # create empty connectivity graph
@@ -74,7 +77,7 @@ def get_connectivity_graph(map,  connection_definition):
         y = key[1]
         for r in range(len(map)):
             for c in range(len(map[0])):
-                if (x != r or y != c) and (map[r][c] == False) and are_vertexes_connected(map, x, y, r, c, connection_definition):
+                if (x != r or y != c) and (map[r][c] == False) and are_vertexes_connected(map, x, y, r, c, connection_definition, distance_used):
                     connectivity_graph[key].append((r, c))
 
     return connectivity_graph
@@ -87,6 +90,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get a modified input for MAPF solver')
     parser.add_argument('--instance', type=str, default=None, help='The name of the instance file(s)')
     parser.add_argument('--connection', type=str, default=CONNECTION1, help='The connection definition to use to build the connectivity graph (one of: {always_connected,distance,distance_and_obstacles}), defaults to ' + str(CONNECTION1))
+    parser.add_argument('--distance', type=int, default=DEFAULT_DISTANCE, help='The distance between vertexes used to define a connection, when using certain connection definitions, defaults to ' + str(DEFAULT_DISTANCE))
     parser.add_argument('--goals-choice', type=str, default=GOALS_CHOICE1, help='The criteria to use to choose the goals (one of: {random,minimum_distance}), defaults to ' + str(GOALS_CHOICE1))
     parser.add_argument('--goal-assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_start-goal_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
 
@@ -99,6 +103,6 @@ if __name__ == '__main__':
         print_mapf_instance(my_map, starts, goals)
 
         print("***Generate connectivity graph***\n")
-        connectivity_graph = get_connectivity_graph(my_map, args.connection)
+        connectivity_graph = get_connectivity_graph(my_map, args.connection, args.distance)
         print_connectivity_graph(connectivity_graph)
 
