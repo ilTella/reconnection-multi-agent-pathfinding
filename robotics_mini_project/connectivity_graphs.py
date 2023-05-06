@@ -17,19 +17,19 @@
 
 # choose n goal vertexes which are connected:
     # 1st version:
-        # choose goals randomly []
+        # choose goals randomly [X]
     # 2nd version:
         # choose goals with minimum distance between them and start positions []
 
 # how must the nodes be connected?
-    # a) all nodes must be connected []
+    # a) all nodes must be connected [X]
     # b) a node A can be connected to B, or connected to B that is connected to C []
 
 # 3)
 
 # assign each goal to each agent:
     # 1st version:
-        # do it randomly []
+        # do it randomly [X]
     # 2nd version:
         # minimize mean start-goal distance []
 
@@ -55,16 +55,29 @@ GOALS_CHOICE2 = "minimum_distance"
 GOAL_ASSIGNMENT1 = "random"
 GOAL_ASSIGNMENT2 = "minimize_start-goal_distance"
 
+FULL_OBSTACLE_WEIGHT = 0.8
+PART_OBSTACLE_WEIGHT = 0.2
+
+def consider_obstacles_with_distance(full_obstacles, part_obstacles, distance):
+    return (distance + full_obstacles*FULL_OBSTACLE_WEIGHT + part_obstacles*PART_OBSTACLE_WEIGHT)
+
 def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_used):
+    print(str(x1) + str(y1) + " -> " + str(x2) + str(y2))
     are_connected = False
 
     if connection_definition == CONNECTION1:
         are_connected = True
+
     elif connection_definition == CONNECTION2:
         if (math.sqrt((x2 - x1)**2 + (y2 - y1)**2)) <= distance_used:
             are_connected = True
+
     elif connection_definition == CONNECTION3:
-        are_connected = False
+        full_obstacles = 0
+        part_obstacles = 0
+        distance = (math.sqrt((x2 - x1)**2 + (y2 - y1)**2))
+        gonna_return = False
+
     else:
         raise RuntimeError("Unknown connection definition!")
     
@@ -74,20 +87,21 @@ def get_connectivity_graph(map, args):
     connectivity_graph = {}
 
     # create empty connectivity graph
-    for r in range(len(map)):
-        for c in range(len(map[0])):
-            if map[r][c] == False:
-                key = (r, c)
+    for row in range(len(map)):
+        for col in range(len(map[0])):
+            if map[row][col] == False:
+                key = (col, row)
                 connectivity_graph[key] = []
     
     # populate graph
     for key in connectivity_graph.keys():
         x = key[0]
         y = key[1]
-        for r in range(len(map)):
-            for c in range(len(map[0])):
-                if (x != r or y != c) and (map[r][c] == False) and are_vertexes_connected(map, x, y, r, c, args.connection, args.distance):
-                    connectivity_graph[key].append((r, c))
+        for row in range(len(map)):
+            for col in range(len(map[0])):
+                if (x != col or y != row) and (map[row][col] == False):
+                    if are_vertexes_connected(map, x, y, col, row, args.connection, args.distance):
+                        connectivity_graph[key].append((col, row))
 
     return connectivity_graph
 
