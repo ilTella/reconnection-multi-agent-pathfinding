@@ -8,7 +8,7 @@
     # 2nd version:
         # A and B are connected if (distance(A, B) < k) [X]
     # 3rd version:
-        # A and B are connected if (distance(A, B) < k && obstacles_between(A, B) < j) []
+        # A and B are connected if (distance(A, B) + weight(obstacles) < k) []
 
 # create empty connectivity graph {[x, y]: [[x1, y1],[x2, y2],[x3, y3], ...], ...} [X]
 # populate connectivity graph using connection definition [X]
@@ -58,8 +58,15 @@ GOAL_ASSIGNMENT2 = "minimize_start-goal_distance"
 FULL_OBSTACLE_WEIGHT = 0.8
 PART_OBSTACLE_WEIGHT = 0.2
 
+def get_distance(x1, y1, x2, y2):
+    return round((math.sqrt((x2 - x1)**2 + (y2 - y1)**2)), 2)
+
 def consider_obstacles_with_distance(full_obstacles, part_obstacles, distance):
-    return (distance + full_obstacles*FULL_OBSTACLE_WEIGHT + part_obstacles*PART_OBSTACLE_WEIGHT)
+    full_obstacles_weight = round((full_obstacles * FULL_OBSTACLE_WEIGHT), 2)
+    part_obstacles_weight = round((part_obstacles * PART_OBSTACLE_WEIGHT), 2)
+    result = round((distance + full_obstacles_weight + part_obstacles_weight), 2)
+    print("\t" + str(distance) + " + " + str(full_obstacles_weight) + " + " + str(part_obstacles_weight) + " = " + str(result))
+    return result
 
 def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_used):
     print(str(x1) + str(y1) + " -> " + str(x2) + str(y2))
@@ -69,14 +76,119 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_
         are_connected = True
 
     elif connection_definition == CONNECTION2:
-        if (math.sqrt((x2 - x1)**2 + (y2 - y1)**2)) <= distance_used:
+        if get_distance(x1, y1, x2, y2) <= distance_used:
             are_connected = True
 
     elif connection_definition == CONNECTION3:
         full_obstacles = 0
         part_obstacles = 0
-        distance = (math.sqrt((x2 - x1)**2 + (y2 - y1)**2))
-        gonna_return = False
+        distance = get_distance(x1, y1, x2, y2)
+
+        # case 1: straight line
+        if x2 == x1:
+            #print("\tstraight line")
+            step = 1
+            if y2 < y1: step = -1
+            y = y1
+            while (y != y2):
+                if map[y][x1]: full_obstacles += 1
+                y += step
+        elif y2 == y1:
+            #print("\tstraight line")
+            step = 1
+            if x2 < x1: step = -1
+            x = x1
+            while (x != x2):
+                if map[y1][x]: full_obstacles += 1
+                x += step
+
+        # case 2: diagonal
+        elif math.fabs(x2 - x1) == math.fabs(y2 - y1):
+            #print("\tdiagonal")
+            x_step = 1
+            if x2 < x1: x_step = -1
+            y_step = 1
+            if y2 < y1: y_step = -1
+
+            main = [x1, y1]
+            main_end = [x2, y2]
+            while main[0] != main_end[0] and main[1] != main_end[1]:
+                if map[main[1]][main[0]]: full_obstacles += 1
+                main[0] += x_step
+                main[1] += y_step
+
+            secondary1 = [x1, y1 + y_step]
+            secondary1_end = [x2 + x_step, y2]
+            while secondary1[0] != secondary1_end[0] + x_step and secondary1[1] != secondary1_end[1] + y_step:
+                if map[secondary1[1]][secondary1[0]]: part_obstacles += 1
+                secondary1[0] += x_step
+                secondary1[1] += y_step
+
+            secondary2 = [x1 + x_step, y1]
+            secondary2_end = [x2, y2 + y_step]
+            while secondary2[0] != secondary2_end[0] + x_step and secondary2[1] != secondary2_end[1] + y_step:
+                if map[secondary2[1]][secondary2[0]]: part_obstacles += 1
+                secondary2[0] += x_step
+                secondary2[1] += y_step
+
+        # case 3 generic line
+        else:
+            #print("\tgeneric line")
+            nodes_to_check = []
+            x_direction = 1
+            if x2 < x1: x_direction = -1
+            y_direction = 1
+            if y2 < y1: y_direction = -1
+
+            # check nodes around (x1, y1) and (x2, y2)
+
+            if not ((x1, y1 + y_direction) in nodes_to_check):
+                nodes_to_check.append((x1, y1 + y_direction))
+            if not ((x1 + x_direction, y1) in nodes_to_check):
+                nodes_to_check.append((x1 + x_direction, y1))
+            corner1 = (x1 + x_direction, y1 + y_direction)
+            if not (corner1 in nodes_to_check):
+                nodes_to_check.append(corner1)
+            
+            if not ((x2, y2 - y_direction) in nodes_to_check):
+                nodes_to_check.append((x2, y2 - y_direction))
+            if not ((x2 - x_direction, y2) in nodes_to_check):
+                nodes_to_check.append((x2 - x_direction, y2))
+            corner2 = (x2 - x_direction, y2 - y_direction)
+            if not (corner2 in nodes_to_check):
+                nodes_to_check.append(corner2)
+
+            # check nodes on the line between (x1, y1) and (x2, y2)
+
+            if math.fabs(x2 - x1) > math.fabs(y2 - y1):
+                rectangle_start = (x1 + 2*x_direction, y1 + y_direction)
+                rectangle_end = (x2 - 2*x_direction, y2 - y_direction)
+            else:
+                rectangle_start = (x1 + x_direction, y1 + 2*y_direction)
+                rectangle_end = (x2 - x_direction, y2 - 2*y_direction)
+
+            x_direction = 1
+            if (corner2[0]) < (corner1[0]): x_direction = -1
+            y_direction = 1
+            if (corner2[1]) < (corner1[1]): y_direction = -1
+
+            #print("\trect_start " +str(rectangle_start))
+            #print("\trect_end " +str(rectangle_end))
+
+            for x in range(rectangle_start[0], rectangle_end[0] + x_direction, x_direction):
+                for y in range(rectangle_start[1], rectangle_end[1] + y_direction, y_direction):
+                    node = (x, y)
+                    #print("\tcheck " + str(node))
+                    if not (node in nodes_to_check): nodes_to_check.append(node)
+
+            for node in nodes_to_check:
+                if map[node[1]][node[0]]:
+                    #print("\tobstacle: " + str(node))
+                    part_obstacles += 1
+        
+        print("\t" + str(full_obstacles) + ", " + str(part_obstacles))
+        if (consider_obstacles_with_distance(full_obstacles, part_obstacles, distance) <= distance_used):
+            are_connected = True
 
     else:
         raise RuntimeError("Unknown connection definition!")
@@ -99,7 +211,7 @@ def get_connectivity_graph(map, args):
         y = key[1]
         for row in range(len(map)):
             for col in range(len(map[0])):
-                if (x != col or y != row) and (map[row][col] == False):
+                if ((x, y) != (col, row)) and (map[row][col] == False):
                     if are_vertexes_connected(map, x, y, col, row, args.connection, args.distance):
                         connectivity_graph[key].append((col, row))
 
@@ -122,13 +234,13 @@ def get_goal_positions(map, starts, connectivity_graph, args):
             for k in keys:
                 if len(connectivity_graph[k]) + 1 >= len(starts):
                     starting_vertex = k
-                    goal_positions.append(k)
+                    goal_positions.append((k[1], k[0]))
                     break
             if starting_vertex == (-1, -1):
                 raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
             for v in connectivity_graph[k]:
                 if len(goal_positions) < len(starts):
-                    goal_positions.append(v)
+                    goal_positions.append((v[1], v[0]))
                 else:
                     return goal_positions
         else:
@@ -151,7 +263,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get a modified input for MAPF solver')
     parser.add_argument('--instance', type=str, default=None, help='The name of the instance file(s)')
     parser.add_argument('--connection', type=str, default=CONNECTION1, help='The connection definition to use to build the connectivity graph (one of: {always_connected,distance,distance_and_obstacles}), defaults to ' + str(CONNECTION1))
-    parser.add_argument('--distance', type=int, default=DEFAULT_DISTANCE, help='The distance between vertexes used to define a connection, when using certain connection definitions, defaults to ' + str(DEFAULT_DISTANCE))
+    parser.add_argument('--distance', type=float, default=DEFAULT_DISTANCE, help='The distance between vertexes used to define a connection, when using certain connection definitions, defaults to ' + str(DEFAULT_DISTANCE))
     parser.add_argument('--connection_requirement', type=str, default=CONNECTION_REQUIREMENT1, help='The requirement agents have at their goal vertexes on their connection (one of: {all_agents_connected,max_one_man-in-the-middle}), defaults to '+ str(CONNECTION_REQUIREMENT1))
     parser.add_argument('--goals_choice', type=str, default=GOALS_CHOICE1, help='The criteria to use to choose the goals (one of: {random,minimum_distance}), defaults to ' + str(GOALS_CHOICE1))
     parser.add_argument('--goal_assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_start-goal_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
@@ -173,10 +285,14 @@ if __name__ == '__main__':
         print("*** Find new goal positions ***\n")
         goal_positions = get_goal_positions(my_map, starts, connectivity_graph, args)
         print(goal_positions)
+        for goal in goal_positions:
+            print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
         print()
 
         print("*** Assign each agent to a goal ***\n")
         new_goals = assign_goals(my_map, starts, goal_positions, args)
+        for i in range(len(new_goals)):
+            print("agent " + str(i) + " goes to: " + str(new_goals[i][1]) + ", " + str(new_goals[i][0]))
         print()
 
         print("*** Modified problem ***\n")
