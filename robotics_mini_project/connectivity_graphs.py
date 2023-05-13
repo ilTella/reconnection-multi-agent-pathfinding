@@ -8,7 +8,9 @@
     # 2nd version:
         # A and B are connected if (distance(A, B) < k) [X]
     # 3rd version:
-        # A and B are connected if (distance(A, B) + weight(obstacles) < k) []
+        # A and B are connected if (distance(A, B) + weight(obstacles) < k) [X]
+    # 4th version:
+        # A and B are always connected, unless there are obstacles between them []
 
 # create empty connectivity graph {[x, y]: [[x1, y1],[x2, y2],[x3, y3], ...], ...} [X]
 # populate connectivity graph using connection definition [X]
@@ -53,7 +55,7 @@ GOALS_CHOICE1 = "random"
 GOALS_CHOICE2 = "minimum_distance"
 
 GOAL_ASSIGNMENT1 = "random"
-GOAL_ASSIGNMENT2 = "minimize_start-goal_distance"
+GOAL_ASSIGNMENT2 = "minimize_distance"
 
 FULL_OBSTACLE_WEIGHT = 0.8
 PART_OBSTACLE_WEIGHT = 0.2
@@ -254,6 +256,41 @@ def assign_goals(map, starts, goal_positions, args):
 
     if args.goal_assignment == GOAL_ASSIGNMENT1:
         new_goals = goal_positions
+    
+    elif args.goal_assignment == GOAL_ASSIGNMENT2:
+        distance_matrix = []
+        
+        to_assign = []
+        for i in range(len(map)):
+            to_assign.append(i)
+        
+        for n in range(len(starts)):
+            distance_matrix.append([])
+            for g in range(len(goal_positions)):
+                distance_matrix[-1].append(get_distance(starts[n][1], starts[n][0], goal_positions[g][1], goal_positions[g][0]))
+        
+        # print distance_matrix
+        s = "distance to:" + " "*5
+        for g in range(len(goal_positions)):
+            s += str(goal_positions[g]) + " "*5
+        print(s + "\n")
+        for r in range(len(distance_matrix)):
+            s = "node" + str(r) + str(starts[r]) + ": " + " "*5
+            for c in range(len(distance_matrix[0])):
+                s += ("%.2f" % distance_matrix[r][c]) + " "*7
+            print(s + "\n")
+        
+        # approccio greedy
+        for n in range(len(starts)):
+            min = 100000
+            to_remove = -1
+            for g in range(len(goal_positions)):
+                if distance_matrix[n][g] < min and g in to_assign:
+                    min = distance_matrix[n][g]
+                    to_remove = g
+            new_goals.append(goal_positions[to_remove])
+            to_assign.remove(to_remove)
+
     else:
         raise(RuntimeError("I don't know what do do yet!"))
 
@@ -266,7 +303,7 @@ if __name__ == '__main__':
     parser.add_argument('--distance', type=float, default=DEFAULT_DISTANCE, help='The distance between vertexes used to define a connection, when using certain connection definitions, defaults to ' + str(DEFAULT_DISTANCE))
     parser.add_argument('--connection_requirement', type=str, default=CONNECTION_REQUIREMENT1, help='The requirement agents have at their goal vertexes on their connection (one of: {all_agents_connected,max_one_man-in-the-middle}), defaults to '+ str(CONNECTION_REQUIREMENT1))
     parser.add_argument('--goals_choice', type=str, default=GOALS_CHOICE1, help='The criteria to use to choose the goals (one of: {random,minimum_distance}), defaults to ' + str(GOALS_CHOICE1))
-    parser.add_argument('--goal_assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_start-goal_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
+    parser.add_argument('--goal_assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
     parser.add_argument('--resolve', type=bool, default=False, help='Decide to resolve the instance using CBS or not, defaults to ' + str(False))
 
     args = parser.parse_args()
