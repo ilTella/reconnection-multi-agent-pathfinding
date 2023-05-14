@@ -21,7 +21,7 @@
     # 1st version:
         # choose goals randomly [X]
     # 2nd version:
-        # choose goals with minimum distance between them and start positions []
+        # choose goals with minimum distance between them and start positions [X]
 
 # how must the nodes be connected?
     # a) all nodes must be connected [X]
@@ -33,7 +33,7 @@
     # 1st version:
         # do it randomly [X]
     # 2nd version:
-        # minimize mean start-goal distance []
+        # minimize start-goal distance with greedy algorithm [X]
 
 import argparse
 import glob
@@ -223,6 +223,14 @@ def print_connectivity_graph(connectivity_graph):
     for key in dict(connectivity_graph):
         print(str(key) + " is connected to: " + str(connectivity_graph[key]))
 
+def get_distance_to_all_starting_points(starts, x, y):
+    total = 0
+
+    for s in starts:
+        total += get_distance(x, y, s[1], s[0])
+
+    return round(total, 2)
+
 def get_goal_positions(map, starts, connectivity_graph, args):
     goal_positions = []
 
@@ -245,8 +253,41 @@ def get_goal_positions(map, starts, connectivity_graph, args):
                     goal_positions.append((v[1], v[0]))
                 else:
                     return goal_positions
+                
         else:
             raise(RuntimeError("I don't know what do do yet!"))
+    
+    elif args.goals_choice == GOALS_CHOICE2:
+        starting_vertex = (-1, -1)
+
+        keys = connectivity_graph.keys()
+        keys = sorted(keys, key=lambda key: get_distance_to_all_starting_points(starts, key[0], key[1]))
+
+        # print nodes, ordered by distance to all starting points
+        print("Cumulative distance between each node and all starting points:")
+        for k in keys:
+            print(str(k) + ": " + str(get_distance_to_all_starting_points(starts, k[0], k[1])))
+        print()
+
+        if args.connection_requirement == CONNECTION_REQUIREMENT1:
+            for k in keys:
+                if len(connectivity_graph[k]) + 1 >= len(starts):
+                    starting_vertex = k
+                    goal_positions.append((k[1], k[0]))
+                    break
+            if starting_vertex == (-1, -1):
+                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
+            for v in connectivity_graph[k]:
+                if len(goal_positions) < len(starts):
+                    goal_positions.append((v[1], v[0]))
+                else:
+                    return goal_positions
+                
+        else:
+            raise(RuntimeError("I don't know what do do yet!"))
+    
+    else:
+        raise(RuntimeError("I don't know what do do yet!"))
         
 
     return goal_positions
