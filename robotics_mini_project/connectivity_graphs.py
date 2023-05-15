@@ -46,7 +46,7 @@ from run_experiments import import_mapf_instance
 CONNECTION1 = "always_connected"
 CONNECTION2 = "distance"
 CONNECTION3 = "distance_and_obstacles"
-DEFAULT_DISTANCE = 2
+DEFAULT_DISTANCE = 3
 
 CONNECTION_REQUIREMENT1 = "all_agents_connected"
 CONNECTION_REQUIREMENT2 = "max_one_man-in-the-middle"
@@ -63,32 +63,36 @@ PART_OBSTACLE_WEIGHT = 0.2
 def get_distance(x1, y1, x2, y2):
     return round((math.sqrt((x2 - x1)**2 + (y2 - y1)**2)), 2)
 
-def consider_obstacles_with_distance(full_obstacles, part_obstacles, distance):
+def consider_obstacles_with_distance(full_obstacles, part_obstacles, distance, debug):
     full_obstacles_weight = round((full_obstacles * FULL_OBSTACLE_WEIGHT), 2)
     part_obstacles_weight = round((part_obstacles * PART_OBSTACLE_WEIGHT), 2)
     result = round((distance + full_obstacles_weight + part_obstacles_weight), 2)
-    print("\t" + str(distance) + " + " + str(full_obstacles_weight) + " + " + str(part_obstacles_weight) + " = " + str(result))
+    if debug:
+        print("\ttotal distance: (distance) " + str(distance) + " + (full obstacles weight) " + str(full_obstacles_weight) + " + (partial obstacles weight) " + str(part_obstacles_weight) + " = " + str(result))
     return result
 
-def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_used):
-    print(str(x1) + str(y1) + " -> " + str(x2) + str(y2))
+def are_vertexes_connected(map, x1, y1, x2, y2, args):
     are_connected = False
 
-    if connection_definition == CONNECTION1:
+    if args.debug:
+        print("(" + str(x1) + ", " + str(y1) + ") -> (" + str(x2) + ", " + str(y2) + ")")
+
+    if args.connection == CONNECTION1:
         are_connected = True
 
-    elif connection_definition == CONNECTION2:
-        if get_distance(x1, y1, x2, y2) <= distance_used:
+    elif args.connection == CONNECTION2:
+        if get_distance(x1, y1, x2, y2) <= args.distance:
             are_connected = True
 
-    elif connection_definition == CONNECTION3:
+    elif args.connection == CONNECTION3:
         full_obstacles = 0
         part_obstacles = 0
         distance = get_distance(x1, y1, x2, y2)
 
         # case 1: straight line
         if x2 == x1:
-            #print("\tstraight line")
+            if args.debug:
+                print("\tstraight line")
             step = 1
             if y2 < y1: step = -1
             y = y1
@@ -96,7 +100,8 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_
                 if map[y][x1]: full_obstacles += 1
                 y += step
         elif y2 == y1:
-            #print("\tstraight line")
+            if args.debug:
+                print("\tstraight line")
             step = 1
             if x2 < x1: step = -1
             x = x1
@@ -106,7 +111,8 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_
 
         # case 2: diagonal
         elif math.fabs(x2 - x1) == math.fabs(y2 - y1):
-            #print("\tdiagonal")
+            if args.debug:
+                print("\tdiagonal")
             x_step = 1
             if x2 < x1: x_step = -1
             y_step = 1
@@ -135,7 +141,8 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_
 
         # case 3 generic line
         else:
-            #print("\tgeneric line")
+            if args.debug:
+                print("\tgeneric line")
             nodes_to_check = []
             x_direction = 1
             if x2 < x1: x_direction = -1
@@ -174,23 +181,32 @@ def are_vertexes_connected(map, x1, y1, x2, y2, connection_definition, distance_
             y_direction = 1
             if (corner2[1]) < (corner1[1]): y_direction = -1
 
-            #print("\trect_start " +str(rectangle_start))
-            #print("\trect_end " +str(rectangle_end))
+            if args.debug:
+                print("\trect_start " +str(rectangle_start))
+                print("\trect_end " +str(rectangle_end))
 
             for x in range(rectangle_start[0], rectangle_end[0] + x_direction, x_direction):
                 for y in range(rectangle_start[1], rectangle_end[1] + y_direction, y_direction):
                     node = (x, y)
-                    #print("\tcheck " + str(node))
+                    if args.debug:
+                        print("\tcheck " + str(node))
                     if not (node in nodes_to_check): nodes_to_check.append(node)
 
             for node in nodes_to_check:
                 if map[node[1]][node[0]]:
-                    #print("\tobstacle: " + str(node))
+                    if args.debug:
+                        print("\tobstacle: " + str(node))
                     part_obstacles += 1
         
-        print("\t" + str(full_obstacles) + ", " + str(part_obstacles))
-        if (consider_obstacles_with_distance(full_obstacles, part_obstacles, distance) <= distance_used):
+        if args.debug:
+            print("\tfull obstacles: " + str(full_obstacles) + ", partial obstacles: " + str(part_obstacles))
+
+        if (consider_obstacles_with_distance(full_obstacles, part_obstacles, distance, args.debug) <= args.distance):
             are_connected = True
+
+        if args.debug:
+            if are_connected: print("\tconnected")
+            if not are_connected: print("\tnot connected")
 
     else:
         raise RuntimeError("Unknown connection definition!")
@@ -214,7 +230,7 @@ def get_connectivity_graph(map, args):
         for row in range(len(map)):
             for col in range(len(map[0])):
                 if ((x, y) != (col, row)) and (map[row][col] == False):
-                    if are_vertexes_connected(map, x, y, col, row, args.connection, args.distance):
+                    if (are_vertexes_connected(map, x, y, col, row, args) == True):
                         connectivity_graph[key].append((col, row))
 
     return connectivity_graph
@@ -235,53 +251,84 @@ def get_goal_positions(map, starts, connectivity_graph, args):
     goal_positions = []
 
     if args.goals_choice == GOALS_CHOICE1:
-        starting_vertex = (-1, -1)
 
-        keys = connectivity_graph.keys()
+        keys = []
+        for k in connectivity_graph.keys():
+            if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
         keys = sorted(keys, key=lambda key: len(connectivity_graph[key]), reverse=True)
+
+        if args.debug:
+            print_connectivity_graph(dict((k, connectivity_graph[k]) for k in keys))
 
         if args.connection_requirement == CONNECTION_REQUIREMENT1:
             for k in keys:
-                if len(connectivity_graph[k]) + 1 >= len(starts):
-                    starting_vertex = k
-                    goal_positions.append((k[1], k[0]))
-                    break
-            if starting_vertex == (-1, -1):
-                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
-            for v in connectivity_graph[k]:
+                goal_positions.append((k[1], k[0]))
+                nodes = []
+                for n in connectivity_graph[k]:
+                    if len(connectivity_graph[n]) + 1 >= len(starts): nodes.append(n)
+                nodes = sorted(nodes, key=lambda node: len(connectivity_graph[node]), reverse=True)
+
+                for n in nodes:
+                    ok = True
+                    for g in goal_positions:
+                        if not (n in connectivity_graph[(g[1], g[0])]):
+                            ok = False
+                            break
+                    if ok: goal_positions.append((n[1], n[0]))
+                    if len(goal_positions) >= len(starts): break
+                
                 if len(goal_positions) < len(starts):
-                    goal_positions.append((v[1], v[0]))
+                    goal_positions = []
+                    continue
                 else:
-                    return goal_positions
+                    break
+
+            if len(goal_positions) < len(starts):
+                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
                 
         else:
             raise(RuntimeError("I don't know what do do yet!"))
     
     elif args.goals_choice == GOALS_CHOICE2:
-        starting_vertex = (-1, -1)
 
-        keys = connectivity_graph.keys()
-        keys = sorted(keys, key=lambda key: get_distance_to_all_starting_points(starts, key[0], key[1]))
+        keys = []
+        for k in connectivity_graph.keys():
+            if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
+        keys = sorted(keys, key=lambda key: get_distance_to_all_starting_points(starts, key[1], key[0]))
 
-        # print nodes, ordered by distance to all starting points
-        print("Cumulative distance between each node and all starting points:")
-        for k in keys:
-            print(str(k) + ": " + str(get_distance_to_all_starting_points(starts, k[0], k[1])))
-        print()
+        if args.debug:
+            # print nodes, ordered by distance to all starting points
+            print("Cumulative distance between each node and all starting points:")
+            for k in keys:
+                print(str(k) + ": " + str(get_distance_to_all_starting_points(starts, k[1], k[0])))
+            print()
+            print_connectivity_graph(dict((k, connectivity_graph[k]) for k in keys))
 
         if args.connection_requirement == CONNECTION_REQUIREMENT1:
             for k in keys:
-                if len(connectivity_graph[k]) + 1 >= len(starts):
-                    starting_vertex = k
-                    goal_positions.append((k[1], k[0]))
-                    break
-            if starting_vertex == (-1, -1):
-                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
-            for v in connectivity_graph[k]:
+                goal_positions.append((k[1], k[0]))
+                nodes = []
+                for n in connectivity_graph[k]:
+                    if len(connectivity_graph[n]) + 1 >= len(starts): nodes.append(n)
+                nodes = sorted(nodes, key=lambda node: len(connectivity_graph[node]), reverse=True)
+
+                for n in nodes:
+                    ok = True
+                    for g in goal_positions:
+                        if not (n in connectivity_graph[(g[1], g[0])]):
+                            ok = False
+                            break
+                    if ok: goal_positions.append((n[1], n[0]))
+                    if len(goal_positions) >= len(starts): break
+                
                 if len(goal_positions) < len(starts):
-                    goal_positions.append((v[1], v[0]))
+                    goal_positions = []
+                    continue
                 else:
-                    return goal_positions
+                    break
+
+            if len(goal_positions) < len(starts):
+                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
                 
         else:
             raise(RuntimeError("I don't know what do do yet!"))
@@ -289,7 +336,6 @@ def get_goal_positions(map, starts, connectivity_graph, args):
     else:
         raise(RuntimeError("I don't know what do do yet!"))
         
-
     return goal_positions
 
 def assign_goals(map, starts, goal_positions, args):
@@ -310,16 +356,17 @@ def assign_goals(map, starts, goal_positions, args):
             for g in range(len(goal_positions)):
                 distance_matrix[-1].append(get_distance(starts[n][1], starts[n][0], goal_positions[g][1], goal_positions[g][0]))
         
-        # print distance_matrix
-        s = "distance to:" + " "*5
-        for g in range(len(goal_positions)):
-            s += str(goal_positions[g]) + " "*5
-        print(s + "\n")
-        for r in range(len(distance_matrix)):
-            s = "node" + str(r) + str(starts[r]) + ": " + " "*5
-            for c in range(len(distance_matrix[0])):
-                s += ("%.2f" % distance_matrix[r][c]) + " "*7
+        if args.debug:
+            # print distance_matrix
+            s = "distance to:" + " "*5
+            for g in range(len(goal_positions)):
+                s += str((goal_positions[g][1], goal_positions[g][0])) + " "*5
             print(s + "\n")
+            for r in range(len(distance_matrix)):
+                s = "node" + str(r) + str((starts[r][1], starts[r][0])) + ": " + " "*5
+                for c in range(len(distance_matrix[0])):
+                    s += ("%.2f" % distance_matrix[r][c]) + " "*7
+                print(s + "\n")
         
         # approccio greedy
         for n in range(len(starts)):
@@ -346,6 +393,7 @@ if __name__ == '__main__':
     parser.add_argument('--goals_choice', type=str, default=GOALS_CHOICE1, help='The criteria to use to choose the goals (one of: {random,minimum_distance}), defaults to ' + str(GOALS_CHOICE1))
     parser.add_argument('--goal_assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
     parser.add_argument('--resolve', type=bool, default=False, help='Decide to resolve the instance using CBS or not, defaults to ' + str(False))
+    parser.add_argument('--debug', type=bool, default=False, help='Print debug information or not, defaults to ' + str(False))
 
     args = parser.parse_args()
 
