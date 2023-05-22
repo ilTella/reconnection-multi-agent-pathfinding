@@ -1,38 +1,40 @@
-# graph -> connectivity graph
-
 # 1)
 
 # definition of connection between nodes:
-    # 1st version:
+    # a)
         # A and B are always connected (graph = connectivity graph) [X]
-    # 2nd version:
+    # b)
         # A and B are connected if (distance(A, B) < k) [X]
-    # 3rd version:
+    # c)
         # A and B are connected if (distance(A, B) + weight(obstacles) < k) [X]
-    # 4th version:
-        # A and B are always connected, unless there are obstacles between them []
 
 # create empty connectivity graph {[x, y]: [[x1, y1],[x2, y2],[x3, y3], ...], ...} [X]
 # populate connectivity graph using connection definition [X]
 
 # 2)
 
+# 2.1)
+
 # choose n goal vertexes which are connected:
-    # 1st version:
+    # a)
         # choose goals randomly [X]
-    # 2nd version:
+    # b)
         # choose goals with minimum distance between them and start positions [X]
 
+# 2.2)
+
 # how must the nodes be connected?
-    # a) all nodes must be connected [X]
-    # b) a node A can be connected to B, or connected to B that is connected to C []
+    # a)
+        # all nodes must be directly connected with each other [X]
+    # b)
+        # all nodes must be connected with each other, even indirectly []
 
 # 3)
 
 # assign each goal to each agent:
-    # 1st version:
+    # a)
         # do it randomly [X]
-    # 2nd version:
+    # b)
         # minimize start-goal distance with greedy algorithm [X]
 
 import argparse
@@ -46,10 +48,11 @@ from run_experiments import import_mapf_instance
 CONNECTION1 = "always_connected"
 CONNECTION2 = "distance"
 CONNECTION3 = "distance_and_obstacles"
-DEFAULT_DISTANCE = 3
+DEFAULT_DISTANCE = 2
 
 CONNECTION_REQUIREMENT1 = "all_agents_connected"
-CONNECTION_REQUIREMENT2 = "max_one_man-in-the-middle"
+CONNECTION_REQUIREMENT2 = "indirect_connection"
+DEFAULT_INDIRECT_NODES = 1
 
 GOALS_CHOICE1 = "random"
 GOALS_CHOICE2 = "minimum_distance"
@@ -205,7 +208,7 @@ def are_vertexes_connected(map, x1, y1, x2, y2, args):
             are_connected = True
 
         if args.debug:
-            if are_connected: print("\tconnected")
+            if are_connected: print("\tconnected!")
             if not are_connected: print("\tnot connected")
 
     else:
@@ -247,11 +250,28 @@ def get_distance_to_all_starting_points(starts, x, y):
 
     return round(total, 2)
 
+def are_goals_connected_even_indirectly(node, goal, connectivity_graph, goal_positions, debug):
+    res = False
+
+    if (goal[1], goal[0]) in connectivity_graph[node]:
+        if (debug):
+            print(str(node) + "connected directly to " + str((goal[1], goal[0])))
+        return True
+    
+    for g in goal_positions:
+        if (g[1], g[0]) in connectivity_graph[node]:
+            if (goal[1], goal[0]) in connectivity_graph[(g[1], g[0])]:
+                if (debug):
+                    print(str(node) + "connected to " + str((goal[1], goal[0])) + " through " + str((g[1], g[0])))
+                res = True
+                break
+
+    return res
+
 def get_goal_positions(map, starts, connectivity_graph, args):
     goal_positions = []
 
     if args.goals_choice == GOALS_CHOICE1:
-
         keys = []
         for k in connectivity_graph.keys():
             if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
@@ -259,38 +279,8 @@ def get_goal_positions(map, starts, connectivity_graph, args):
 
         if args.debug:
             print_connectivity_graph(dict((k, connectivity_graph[k]) for k in keys))
-
-        if args.connection_requirement == CONNECTION_REQUIREMENT1:
-            for k in keys:
-                goal_positions.append((k[1], k[0]))
-                nodes = []
-                for n in connectivity_graph[k]:
-                    if len(connectivity_graph[n]) + 1 >= len(starts): nodes.append(n)
-                nodes = sorted(nodes, key=lambda node: len(connectivity_graph[node]), reverse=True)
-
-                for n in nodes:
-                    ok = True
-                    for g in goal_positions:
-                        if not (n in connectivity_graph[(g[1], g[0])]):
-                            ok = False
-                            break
-                    if ok: goal_positions.append((n[1], n[0]))
-                    if len(goal_positions) >= len(starts): break
-                
-                if len(goal_positions) < len(starts):
-                    goal_positions = []
-                    continue
-                else:
-                    break
-
-            if len(goal_positions) < len(starts):
-                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
-                
-        else:
-            raise(RuntimeError("I don't know what do do yet!"))
     
     elif args.goals_choice == GOALS_CHOICE2:
-
         keys = []
         for k in connectivity_graph.keys():
             if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
@@ -303,39 +293,62 @@ def get_goal_positions(map, starts, connectivity_graph, args):
                 print(str(k) + ": " + str(get_distance_to_all_starting_points(starts, k[1], k[0])))
             print()
             print_connectivity_graph(dict((k, connectivity_graph[k]) for k in keys))
-
-        if args.connection_requirement == CONNECTION_REQUIREMENT1:
-            for k in keys:
-                goal_positions.append((k[1], k[0]))
-                nodes = []
-                for n in connectivity_graph[k]:
-                    if len(connectivity_graph[n]) + 1 >= len(starts): nodes.append(n)
-                nodes = sorted(nodes, key=lambda node: len(connectivity_graph[node]), reverse=True)
-
-                for n in nodes:
-                    ok = True
-                    for g in goal_positions:
-                        if not (n in connectivity_graph[(g[1], g[0])]):
-                            ok = False
-                            break
-                    if ok: goal_positions.append((n[1], n[0]))
-                    if len(goal_positions) >= len(starts): break
-                
-                if len(goal_positions) < len(starts):
-                    goal_positions = []
-                    continue
-                else:
-                    break
-
-            if len(goal_positions) < len(starts):
-                raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
-                
-        else:
-            raise(RuntimeError("I don't know what do do yet!"))
     
-    else:
-        raise(RuntimeError("I don't know what do do yet!"))
-        
+    if args.connection_requirement == CONNECTION_REQUIREMENT1:
+        for k in keys:
+            goal_positions.append((k[1], k[0]))
+            nodes = []
+            for n in connectivity_graph[k]:
+                if len(connectivity_graph[n]) + 1 >= len(starts): nodes.append(n)
+            nodes = sorted(nodes, key=lambda node: len(connectivity_graph[node]), reverse=True)
+
+            for n in nodes:
+                ok = True
+                for g in goal_positions:
+                    if not (n in connectivity_graph[(g[1], g[0])]):
+                        ok = False
+                        break
+                if ok:
+                    goal_positions.append((n[1], n[0]))
+                if len(goal_positions) >= len(starts):
+                    break
+            
+            if len(goal_positions) < len(starts):
+                goal_positions = []
+                continue
+            else:
+                break
+
+    if args.connection_requirement == CONNECTION_REQUIREMENT2: # prima versione, max 1 "agente intermediario"
+        for k in keys:
+            ok = True
+            for g in goal_positions:
+                if not are_goals_connected_even_indirectly(k, g, connectivity_graph, goal_positions, args.debug):
+                    ok = False
+            if ok:
+                goal_positions.append((k[1], k[0]))
+            else:
+                continue 
+            
+            for n in connectivity_graph[k]:
+                ok = True
+                for g in goal_positions:
+                    if not are_goals_connected_even_indirectly(n, g, connectivity_graph, goal_positions, args.debug):
+                        ok = False
+                if ok:
+                    goal_positions.append((n[1], n[0]))
+                if len(goal_positions) >= len(starts):
+                    break
+            
+            if len(goal_positions) < len(starts):
+                goal_positions = []
+                continue
+            else:
+                break
+
+    if len(goal_positions) < len(starts):
+        raise(RuntimeError("This map doesn't have enough connected vertexes for all its agents!"))
+    
     return goal_positions
 
 def assign_goals(map, starts, goal_positions, args):
@@ -389,10 +402,10 @@ if __name__ == '__main__':
     parser.add_argument('--instance', type=str, default=None, help='The name of the instance file(s)')
     parser.add_argument('--connection', type=str, default=CONNECTION1, help='The connection definition to use to build the connectivity graph (one of: {always_connected,distance,distance_and_obstacles}), defaults to ' + str(CONNECTION1))
     parser.add_argument('--distance', type=float, default=DEFAULT_DISTANCE, help='The distance between vertexes used to define a connection, when using certain connection definitions, defaults to ' + str(DEFAULT_DISTANCE))
-    parser.add_argument('--connection_requirement', type=str, default=CONNECTION_REQUIREMENT1, help='The requirement agents have at their goal vertexes on their connection (one of: {all_agents_connected,max_one_man-in-the-middle}), defaults to '+ str(CONNECTION_REQUIREMENT1))
+    parser.add_argument('--connection_requirement', type=str, default=CONNECTION_REQUIREMENT1, help='The requirement agents have at their goal vertexes on their connection (one of: {all_agents_connected,indirect_connection}), defaults to '+ str(CONNECTION_REQUIREMENT1))
     parser.add_argument('--goals_choice', type=str, default=GOALS_CHOICE1, help='The criteria to use to choose the goals (one of: {random,minimum_distance}), defaults to ' + str(GOALS_CHOICE1))
     parser.add_argument('--goal_assignment', type=str, default=GOAL_ASSIGNMENT1, help='The criteria to use to assign each goal to an agent (one of: {random,minimize_distance}), defaults to ' + str(GOAL_ASSIGNMENT1))
-    parser.add_argument('--resolve', type=bool, default=False, help='Decide to resolve the instance using CBS or not, defaults to ' + str(False))
+    parser.add_argument('--solve', type=bool, default=False, help='Decide to solve the instance using CBS or not, defaults to ' + str(False))
     parser.add_argument('--debug', type=bool, default=False, help='Print debug information or not, defaults to ' + str(False))
 
     args = parser.parse_args()
@@ -424,7 +437,7 @@ if __name__ == '__main__':
         print("*** Modified problem ***\n")
         print_mapf_instance(my_map, starts, new_goals)
 
-        if (args.resolve):
+        if (args.solve):
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, new_goals)
             paths = cbs.find_solution(False)
