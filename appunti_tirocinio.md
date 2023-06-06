@@ -54,6 +54,9 @@ L'assunzione più semplice è che tutti i vertici siano connessi, ma ciò è inu
 Una definizione più complessa combina la distanza tra vertici e gli ostacoli posti tra loro: due vertici sono connessi se tra loro la distanza è minore di un certo parametro, e la distanza è considerata maggiore se ci sono ostacoli sulla linea immaginaria che li congiunge.
 Ciò cerca di simulare un segnale wireless che si indebolisce se deve passare attraverso superfici solide.
 
+Se si considerano gli ostacoli tra due vertici per determinarne la connessione, ho fatto in modo che un ostacolo abbia un peso maggiore se blocca totalmente la linea diretta che li congiunge, mentre ha un peso ridotto se la linea passa solo parzialmente attraverso esso.
+In questo modo si può simulare meglio l'indebolimento del segnale, che sarà maggior all'aumentare della massa solida da attraversare.
+
 Successivamente utilizzo il grafo di connessione creato per trovare n goal (dove n è il numero di agenti) che rispettino le condizioni stabilite, quindi che siano o tutti connessi, oppure connessi tramite al massimo k intermediari.
 Posso servirmi delle posizioni di partenza per cercare di trovare un gruppo di vertici vicino agli agenti.
 
@@ -118,3 +121,15 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         </td>
     </tr>
 </table>
+
+Passando il problema modificato al risolutore CBS si è verificata un'anomalia con l'istanza `/instances/test_1.txt`.
+L'algoritmo permetteva ad alcuni agenti di collidere tra loro.
+
+A parte questo strano comportamento, si può notare come modificando l'istanza del problema con l'algoritmo sviluppato, il CBS impieghi meno tempo per trovare una soluzione.
+Ci sono delle eccezioni: istanze difficili per il quale l'algoritmo CBS impiega centinaia o migliaia di iterazioni per trovare una soluzione accettabile.
+
+#### Statistiche
+
+Per quanto riguarda la somma dei costi dei cammini, si può verificare come generando nuovi nodi di goal tramite l'algoritmo creato, la somma dei costi in media diminuisca.
+Su 50 test, solo in 6 casi hanno un costo totale minore i cammini con i goal originari, più 3 casi in cui con i nuovi goal l'algoritmo non termina in un tempo ragionevole.
+Negli altri 41 casi, il nuovo problema ha una soluzione con costo totale inferiore e spesso non di poco.

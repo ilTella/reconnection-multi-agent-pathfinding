@@ -1,49 +1,11 @@
-# 1)
-
-# definition of connection between nodes:
-    # a)
-        # A and B are always connected (graph = connectivity graph) [X]
-    # b)
-        # A and B are connected if (distance(A, B) < k) [X]
-    # c)
-        # A and B are connected if (distance(A, B) + weight(obstacles) < k) [X]
-
-# create empty connectivity graph {[x, y]: [[x1, y1],[x2, y2],[x3, y3], ...], ...} [X]
-# populate connectivity graph using connection definition [X]
-
-# 2)
-
-# 2.1)
-
-# choose n goal vertexes which are connected:
-    # a)
-        # choose goals randomly [X]
-    # b)
-        # choose goals with minimum distance between them and start positions [X]
-
-# 2.2)
-
-# how must the nodes be connected?
-    # a)
-        # all nodes must be directly connected with each other [X]
-    # b)
-        # all nodes must be connected with each other, even indirectly []
-
-# 3)
-
-# assign each goal to each agent:
-    # a)
-        # do it randomly [X]
-    # b)
-        # minimize start-goal distance with greedy algorithm [X]
-
 import argparse
 import glob
 import math
 from cbs import CBSSolver
+from single_agent_planner import get_sum_of_cost
 from visualize import Animation
-from run_experiments import print_mapf_instance
 from run_experiments import import_mapf_instance
+from run_experiments import print_mapf_instance
 
 CONNECTION1 = "always_connected"
 CONNECTION2 = "distance"
@@ -52,7 +14,6 @@ DEFAULT_DISTANCE = 2
 
 CONNECTION_REQUIREMENT1 = "all_agents_connected"
 CONNECTION_REQUIREMENT2 = "indirect_connection"
-DEFAULT_INDIRECT_NODES = 1
 
 GOALS_CHOICE1 = "random"
 GOALS_CHOICE2 = "minimum_distance"
@@ -129,14 +90,14 @@ def are_vertexes_connected(map, x1, y1, x2, y2, args):
                 main[1] += y_step
 
             secondary1 = [x1, y1 + y_step]
-            secondary1_end = [x2 + x_step, y2]
+            secondary1_end = [x2 - x_step, y2]
             while secondary1[0] != secondary1_end[0] + x_step and secondary1[1] != secondary1_end[1] + y_step:
                 if map[secondary1[1]][secondary1[0]]: part_obstacles += 1
                 secondary1[0] += x_step
                 secondary1[1] += y_step
 
             secondary2 = [x1 + x_step, y1]
-            secondary2_end = [x2, y2 + y_step]
+            secondary2_end = [x2, y2 - y_step]
             while secondary2[0] != secondary2_end[0] + x_step and secondary2[1] != secondary2_end[1] + y_step:
                 if map[secondary2[1]][secondary2[0]]: part_obstacles += 1
                 secondary2[0] += x_step
@@ -208,8 +169,10 @@ def are_vertexes_connected(map, x1, y1, x2, y2, args):
             are_connected = True
 
         if args.debug:
-            if are_connected: print("\tconnected!")
-            if not are_connected: print("\tnot connected")
+            if are_connected:
+                print("\tconnected!")
+            else:
+                print("\tnot connected")
 
     else:
         raise RuntimeError("Unknown connection definition!")
@@ -268,13 +231,14 @@ def are_goals_connected_even_indirectly(node, goal, connectivity_graph, goal_pos
 
     return res
 
-def get_goal_positions(map, starts, connectivity_graph, args):
+def get_goal_positions(starts, connectivity_graph, args):
     goal_positions = []
 
     if args.goals_choice == GOALS_CHOICE1:
         keys = []
         for k in connectivity_graph.keys():
-            if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
+            if len(connectivity_graph[k]) + 1 >= len(starts) or args.connection_requirement != CONNECTION_REQUIREMENT1:
+                keys.append(k)
         keys = sorted(keys, key=lambda key: len(connectivity_graph[key]), reverse=True)
 
         if args.debug:
@@ -283,7 +247,8 @@ def get_goal_positions(map, starts, connectivity_graph, args):
     elif args.goals_choice == GOALS_CHOICE2:
         keys = []
         for k in connectivity_graph.keys():
-            if len(connectivity_graph[k]) + 1 >= len(starts): keys.append(k)
+            if len(connectivity_graph[k]) + 1 >= len(starts) or args.connection_requirement != CONNECTION_REQUIREMENT1:
+                keys.append(k)
         keys = sorted(keys, key=lambda key: get_distance_to_all_starting_points(starts, key[1], key[0]))
 
         if args.debug:
@@ -351,7 +316,7 @@ def get_goal_positions(map, starts, connectivity_graph, args):
     
     return goal_positions
 
-def assign_goals(map, starts, goal_positions, args):
+def assign_goals(starts, goal_positions, args):
     new_goals = []
 
     if args.goal_assignment == GOAL_ASSIGNMENT1:
@@ -361,7 +326,7 @@ def assign_goals(map, starts, goal_positions, args):
         distance_matrix = []
         
         to_assign = []
-        for i in range(len(map)):
+        for i in range(len(goal_positions)):
             to_assign.append(i)
         
         for n in range(len(starts)):
@@ -386,7 +351,7 @@ def assign_goals(map, starts, goal_positions, args):
             min = 100000
             to_remove = -1
             for g in range(len(goal_positions)):
-                if distance_matrix[n][g] < min and g in to_assign:
+                if (distance_matrix[n][g] < min) and (g in to_assign):
                     min = distance_matrix[n][g]
                     to_remove = g
             new_goals.append(goal_positions[to_remove])
@@ -410,6 +375,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    result_file = open("results_cg.csv", "a", buffering=1)
+
     for file in sorted(glob.glob(args.instance)):
 
         print("*** Import an instance ***\n")
@@ -422,14 +389,13 @@ if __name__ == '__main__':
         print()
 
         print("*** Find new goal positions ***\n")
-        goal_positions = get_goal_positions(my_map, starts, connectivity_graph, args)
-        print(goal_positions)
+        goal_positions = get_goal_positions(starts, connectivity_graph, args)
         for goal in goal_positions:
             print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
         print()
 
         print("*** Assign each agent to a goal ***\n")
-        new_goals = assign_goals(my_map, starts, goal_positions, args)
+        new_goals = assign_goals(starts, goal_positions, args)
         for i in range(len(new_goals)):
             print("agent " + str(i) + " goes to: " + str(new_goals[i][1]) + ", " + str(new_goals[i][0]))
         print()
@@ -441,6 +407,10 @@ if __name__ == '__main__':
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, new_goals)
             paths = cbs.find_solution(False)
+
+            cost = get_sum_of_cost(paths, new_goals, starts)
+            result_file.write("{},{}\n".format(file, cost))
+            
             animation = Animation(my_map, starts, new_goals, paths)
             animation.show()
 
