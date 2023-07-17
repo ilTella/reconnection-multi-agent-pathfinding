@@ -3,7 +3,7 @@ import glob
 import math
 from cbs import CBSSolver
 from single_agent_planner import get_sum_of_cost
-from visualize import Animation
+from visualize import Enhanced_Animation
 from run_experiments import import_mapf_instance
 from run_experiments import print_mapf_instance
 
@@ -411,6 +411,6 @@ if __name__ == '__main__':
             cost = get_sum_of_cost(paths, new_goals, starts)
             result_file.write("{},{}\n".format(file, cost))
             
-            animation = Animation(my_map, starts, new_goals, paths)
+            animation = Enhanced_Animation(my_map, starts, new_goals, connectivity_graph, paths)
             animation.show()
 

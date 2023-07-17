@@ -133,3 +133,10 @@ Ci sono delle eccezioni: istanze difficili per il quale l'algoritmo CBS impiega 
 Per quanto riguarda la somma dei costi dei cammini, si può verificare come generando nuovi nodi di goal tramite l'algoritmo creato, la somma dei costi in media diminuisca.
 Su 50 test, solo in 6 casi hanno un costo totale minore i cammini con i goal originari, più 3 casi in cui con i nuovi goal l'algoritmo non termina in un tempo ragionevole.
 Negli altri 41 casi, il nuovo problema ha una soluzione con costo totale inferiore e spesso non di poco.
+
+## cose da fare
+
+* Guardare networkx
+* Guardare random generator lattice
+* Creare nell'animazione una riga che colleghi nodi di goal connessi tra loro, così si vede quali sono connessi indirettamente
+* Creare un generatore casuale di instanze del problema
