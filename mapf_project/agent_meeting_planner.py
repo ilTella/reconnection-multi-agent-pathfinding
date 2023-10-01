@@ -1,5 +1,7 @@
 import argparse
 import glob
+import multiprocessing
+import time
 from connectivity_graphs import get_connectivity_graph, print_connectivity_graph, import_connectivity_graph
 from libraries.cbs import CBSSolver
 from libraries.single_agent_planner import a_star, compute_heuristics
@@ -7,21 +9,7 @@ from libraries.visualize import Enhanced_Animation
 from run_experiments import import_mapf_instance, print_mapf_instance
 from libraries.enums import GoalsChoice, GoalsAssignment, ConnectionCriterion, ConnectionRequirement
 
-'''
-CONNECTION1 = "always_connected"
-CONNECTION2 = "distance"
-CONNECTION3 = "distance_and_obstacles"
-DEFAULT_DISTANCE = 2
-
-CONNECTION_REQUIREMENT1 = "all_agents_connected"
-CONNECTION_REQUIREMENT2 = "indirect_connection"
-
-GOALS_CHOICE1 = "random"
-GOALS_CHOICE2 = "minimum_distance"
-
-GOALS_ASSIGNMENT1 = "random"
-GOALS_ASSIGNMENT2 = "minimize_distance"
-'''
+SOLVER_TIMEOUT = 30
 
 def get_shortest_path_length(map, start_node, goal_node, heuristics):
     path = a_star(map, start_node, goal_node, heuristics, 0, [])
@@ -187,6 +175,42 @@ def assign_goals(map, starts, goal_positions, args):
 
     return new_goals
 
+def solve_instance(file, args):
+    print("*** Import an instance ***\n")
+    my_map, starts, goals = import_mapf_instance(file)
+    print_mapf_instance(my_map, starts, goals)
+
+    if (args.connectivity_graph != None):
+        print("*** Import connectivity graph from file ***\n")
+        connectivity_graph = import_connectivity_graph(args.connectivity_graph)
+    else:
+        print("*** Generate connectivity graph ***\n")
+        connectivity_graph = get_connectivity_graph(my_map, args)
+    print_connectivity_graph(connectivity_graph)
+    print()
+
+    print("*** Find new goal positions ***\n")
+    goal_positions = get_goal_positions(my_map, starts, connectivity_graph, args)
+    for goal in goal_positions:
+        print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
+    print()
+
+    print("*** Assign each agent to a goal ***\n")
+    new_goals = assign_goals(my_map, starts, goal_positions, args)
+    for i in range(len(new_goals)):
+        print("agent " + str(i) + " goes to: " + str(new_goals[i][1]) + ", " + str(new_goals[i][0]))
+    print()
+
+    print("*** Modified problem ***\n")
+    print_mapf_instance(my_map, starts, new_goals)
+
+    if (args.solve):
+        print("***Run CBS***")
+        cbs = CBSSolver(my_map, starts, new_goals)
+        paths = cbs.find_solution(False)
+        
+        animation = Enhanced_Animation(my_map, starts, new_goals, connectivity_graph, paths)
+        animation.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Solve a MAPF agent meeting problem')
@@ -212,39 +236,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for file in sorted(glob.glob(args.instance)):
+        p = multiprocessing.Process(target=solve_instance, name="Solve instance", args=(file, args))
+        p.start()
 
-        print("*** Import an instance ***\n")
-        my_map, starts, goals = import_mapf_instance(file)
-        print_mapf_instance(my_map, starts, goals)
-
-        if (args.connectivity_graph != None):
-            print("*** Import connectivity graph from file ***\n")
-            connectivity_graph = import_connectivity_graph(args.connectivity_graph)
-        else:
-            print("*** Generate connectivity graph ***\n")
-            connectivity_graph = get_connectivity_graph(my_map, args)
-        print_connectivity_graph(connectivity_graph)
-        print()
-
-        print("*** Find new goal positions ***\n")
-        goal_positions = get_goal_positions(my_map, starts, connectivity_graph, args)
-        for goal in goal_positions:
-            print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
-        print()
-
-        print("*** Assign each agent to a goal ***\n")
-        new_goals = assign_goals(my_map, starts, goal_positions, args)
-        for i in range(len(new_goals)):
-            print("agent " + str(i) + " goes to: " + str(new_goals[i][1]) + ", " + str(new_goals[i][0]))
-        print()
-
-        print("*** Modified problem ***\n")
-        print_mapf_instance(my_map, starts, new_goals)
-
-        if (args.solve):
-            print("***Run CBS***")
-            cbs = CBSSolver(my_map, starts, new_goals)
-            paths = cbs.find_solution(False)
-            
-            animation = Enhanced_Animation(my_map, starts, new_goals, connectivity_graph, paths)
-            animation.show()
+        counter = 0
+        while (counter < SOLVER_TIMEOUT):
+            time.sleep(1)
+            counter += 1
+            if (not p.is_alive()):
+                break
+        if (p.is_alive()):
+            print("Solver coult not finish in " + str(SOLVER_TIMEOUT) + " seconds and was terminated")
+            p.terminate()
+            p.join()
