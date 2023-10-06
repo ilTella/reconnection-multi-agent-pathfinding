@@ -1,18 +1,14 @@
 from enum import Enum
 
 class GoalsChoice(Enum):
-    RANDOM = 1
-    MINIMIZE_DISTANCE = 2
+    GREEDY_MINIMIZE_DISTANCE = 1            # incomplete, suboptimal
 
 class GoalsAssignment(Enum):
-    RANDOM = 1
-    MINIMIZE_DISTANCE = 2
+    ARBITRARY = 1                           # suboptimal
+    RANDOM = 2                              # suboptimal
+    GREEDY_MINIMIZE_DISTANCE = 3            # suboptimal
 
 class ConnectionCriterion(Enum):
     NONE = 1
     DISTANCE = 2
-    DISTANCE_AND_OBSTACLES = 3
-
-class ConnectionRequirement(Enum):
-    DIRECT = 1
-    INDIRECT = 2
+    PATH_LENGTH = 3
