@@ -133,3 +133,9 @@ Ci sono delle eccezioni: istanze difficili per il quale l'algoritmo CBS impiega 
 Per quanto riguarda la somma dei costi dei cammini, si può verificare come generando nuovi nodi di goal tramite l'algoritmo creato, la somma dei costi in media diminuisca.
 Su 50 test, solo in 6 casi hanno un costo totale minore i cammini con i goal originari, più 3 casi in cui con i nuovi goal l'algoritmo non termina in un tempo ragionevole.
 Negli altri 41 casi, il nuovo problema ha una soluzione con costo totale inferiore e spesso non di poco.
+
+#### Problemi
+
+Istanze 36, 37, 38, 39 risultano non risolvibili: generano KeyError: (0, 0) durante la generazione del grafo di connettività.
+
+(solve_instance -> generate_connectivity_graph -> are_nodes_connected -> get_shortest_path_length -> a_star)

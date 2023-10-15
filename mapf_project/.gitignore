@@ -1,4 +1,4 @@
-output.txt
+outputs/
 results.csv
 results_cg.csv
 __pycache__/

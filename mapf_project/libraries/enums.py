@@ -6,7 +6,9 @@ class GoalsChoice(Enum):
 class GoalsAssignment(Enum):
     ARBITRARY = 1                           # suboptimal
     RANDOM = 2                              # suboptimal
-    GREEDY_MINIMIZE_DISTANCE = 3            # suboptimal
+    GREEDY = 3                              # suboptimal
+    EXHAUSTIVE_SEARCH_ASTAR = 4             # optimal, impractical for medium-large instances
+    MINIMIZE_DISTANCE_ASTAR = 5             # suboptimal (does not consider collisions)
 
 class ConnectionCriterion(Enum):
     NONE = 1

@@ -2,14 +2,17 @@ import argparse
 import glob
 import multiprocessing
 import time
+import sys
 from random import shuffle
 from typing import Optional
-from connectivity_graphs import generate_connectivity_graph, get_shortest_path_length, print_connectivity_graph, import_connectivity_graph
+from libraries.connectivity_graphs import generate_connectivity_graph, print_connectivity_graph, import_connectivity_graph
 from libraries.cbs import CBSSolver
 from libraries.single_agent_planner import compute_heuristics
 from libraries.visualize import Enhanced_Animation
 from run_experiments import import_mapf_instance, print_locations
 from libraries.enums import GoalsChoice, GoalsAssignment, ConnectionCriterion
+from libraries.utils import get_shortest_path_length
+from libraries.goals_assignment import search_goals_assignment_astar, search_goals_assignment_exhaustive_search_astar, print_goals_assignment
 
 '''
     'map' and other data structures/functions associated with external libraries use (row, col) to identify nodes,
@@ -17,7 +20,7 @@ from libraries.enums import GoalsChoice, GoalsAssignment, ConnectionCriterion
     therefore, when passing arguments to the former, the coordinates must be switched (row = y, col = x)
 '''
 
-SOLVER_TIMEOUT = 30
+SOLVER_TIMEOUT = 60
 
 def get_distance_to_all_starting_locations(map: list[list[bool]], starts: list[tuple[int, int]], node: tuple[int, int]) -> int:
     total_distance = 0
@@ -64,7 +67,7 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
     
     return goal_positions
 
-def assign_goals(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]], args: list) -> list[tuple[int, int]]:
+def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]], args: list) -> list[tuple[int, int]]:
     new_goals = []
 
     if args.goals_assignment == GoalsAssignment.ARBITRARY.name:
@@ -74,7 +77,7 @@ def assign_goals(map: list[list[bool]], starts: list[tuple[int, int]], goal_posi
         shuffle(goal_positions)
         new_goals = goal_positions
 
-    elif args.goals_assignment == GoalsAssignment.GREEDY_MINIMIZE_DISTANCE.name:
+    elif args.goals_assignment == GoalsAssignment.GREEDY.name:
         agents_to_assign = []
         for i in range(len(starts)):
             agents_to_assign.append(i)
@@ -89,18 +92,20 @@ def assign_goals(map: list[list[bool]], starts: list[tuple[int, int]], goal_posi
             new_goals.append(distances_to_goals[0][0])
             goal_positions.remove(distances_to_goals[0][0])
 
+    elif args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH_ASTAR.name:
+        new_goals = search_goals_assignment_exhaustive_search_astar(map, starts, goal_positions)
+
+    elif args.goals_assignment == GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name:
+        new_goals = search_goals_assignment_astar(map, starts, goal_positions)
+
     else:
-        raise(RuntimeError("I don't know what do do yet!"))
+        raise(RuntimeError("Unknown goals assignment algorithm."))
 
     return new_goals
 
 def print_goal_positions(goal_positions: list[tuple[int, int]]) -> None:
     for goal in goal_positions:
         print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
-
-def print_goals_assignment(goals: list[tuple[int, int]]) -> None:
-    for i in range(len(goals)):
-        print("agent " + str(i) + " goes to: " + str(goals[i][1]) + ", " + str(goals[i][0]))
 
 def print_mapf_instance(map: list[list[bool]], starts: list[tuple[int, int]], goals: Optional[list[tuple[int, int]]] = None) -> None:
     print("Start locations")
@@ -109,8 +114,16 @@ def print_mapf_instance(map: list[list[bool]], starts: list[tuple[int, int]], go
         print("Goal locations")
         print_locations(map, goals)
 
-def solve_instance(file, args: list) -> None:
+def solve_instance(file: str, args: list) -> None:
+    if (args.save_output):
+        file_name_sections = file.split("\\")
+        file_id = file_name_sections[-1].split(".")[0]
+        path = "./outputs/" + file_id + ".txt"
+        f = open(path, 'w')
+        sys.stdout = f
+
     print("*** Import an instance ***\n")
+    print("Instance: " + file + "\n")
     map, starts, _ = import_mapf_instance(file)
     print_mapf_instance(map, starts)
 
@@ -129,7 +142,7 @@ def solve_instance(file, args: list) -> None:
     print()
 
     print("*** Assign each agent to a goal ***\n")
-    new_goals = assign_goals(map, starts, goal_positions, args)
+    new_goals = get_goals_assignment(map, starts, goal_positions, args)
     print_goals_assignment(new_goals)
     print()
 
@@ -150,8 +163,8 @@ if __name__ == '__main__':
                         help='The name of the instance file(s)')
     parser.add_argument('--goals_choice', type=str, default=GoalsChoice.GREEDY_MINIMIZE_DISTANCE.name, choices=[GoalsChoice.GREEDY_MINIMIZE_DISTANCE.name],
                         help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.GREEDY_MINIMIZE_DISTANCE.name)
-    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.GREEDY_MINIMIZE_DISTANCE.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY_MINIMIZE_DISTANCE.name],
-                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.GREEDY_MINIMIZE_DISTANCE.name)
+    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH_ASTAR.name, GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name],
+                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name)
     parser.add_argument('--connectivity_graph', type=str, default=None,
                         help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')
     parser.add_argument('--connection_criterion', type=str, default=ConnectionCriterion.PATH_LENGTH.name, choices=[ConnectionCriterion.NONE.name, ConnectionCriterion.DISTANCE.name, ConnectionCriterion.PATH_LENGTH.name],
@@ -160,6 +173,8 @@ if __name__ == '__main__':
                         help='The Euclidean distance used to define a connection, when using connection criteria based on distance between nodes, defaults to ' + str(3))
     parser.add_argument('--solve', type=bool, default=False,
                         help='Decide to solve the instance using CBS or not, defaults to ' + str(False))
+    parser.add_argument('--save_output', type=bool, default=False,
+                        help='Decide to save the output in txt files, defaults to ' + str(False))
 
     args = parser.parse_args()
 
