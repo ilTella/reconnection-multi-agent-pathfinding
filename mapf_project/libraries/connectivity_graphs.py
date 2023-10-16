@@ -11,6 +11,14 @@ import re
     therefore, when passing arguments to the former, the coordinates must be switched (row = y, col = x)
 '''
 
+def are_nodes_a_clique(nodes: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> bool:
+    for n1 in nodes:
+        for n2 in nodes:
+            if (n1 != n2) and (not n2 in connectivity_graph[n1]):
+                return False
+
+    return True
+
 def are_nodes_connected(map: list[list[bool]], x1: int, y1: int, x2: int, y2: int, args: list) -> bool:
     connected = False
 

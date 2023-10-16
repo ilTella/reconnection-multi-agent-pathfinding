@@ -3,16 +3,16 @@ import glob
 import multiprocessing
 import time
 import sys
-from random import shuffle
-from typing import Optional
-from libraries.connectivity_graphs import generate_connectivity_graph, print_connectivity_graph, import_connectivity_graph
 from libraries.cbs import CBSSolver
+from libraries.connectivity_graphs import are_nodes_a_clique, generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
+from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
+from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_astar, search_goals_assignment_exhaustive_search_astar
+from libraries.goals_choice import get_distance_to_all_starting_locations, print_goal_positions
+from libraries.run_experiments import import_mapf_instance
 from libraries.single_agent_planner import compute_heuristics
+from libraries.utils import get_shortest_path_length, print_mapf_instance
 from libraries.visualize import Enhanced_Animation
-from run_experiments import import_mapf_instance, print_locations
-from libraries.enums import GoalsChoice, GoalsAssignment, ConnectionCriterion
-from libraries.utils import get_shortest_path_length
-from libraries.goals_assignment import search_goals_assignment_astar, search_goals_assignment_exhaustive_search_astar, print_goals_assignment
+from random import shuffle
 
 '''
     'map' and other data structures/functions associated with external libraries use (row, col) to identify nodes,
@@ -21,23 +21,6 @@ from libraries.goals_assignment import search_goals_assignment_astar, search_goa
 '''
 
 SOLVER_TIMEOUT = 60
-
-def get_distance_to_all_starting_locations(map: list[list[bool]], starts: list[tuple[int, int]], node: tuple[int, int]) -> int:
-    total_distance = 0
-    heuristics = compute_heuristics(map, node)
-
-    for s in starts:
-        total_distance += get_shortest_path_length(map, s, node, heuristics)
-
-    return total_distance
-
-def are_nodes_a_clique(nodes: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> bool:
-    for n1 in nodes:
-        for n2 in nodes:
-            if (n1 != n2) and (not n2 in connectivity_graph[n1]):
-                return False
-
-    return True
 
 def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], args: list) -> list[tuple[int, int]]:
     goal_positions = []
@@ -102,17 +85,6 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
         raise(RuntimeError("Unknown goals assignment algorithm."))
 
     return new_goals
-
-def print_goal_positions(goal_positions: list[tuple[int, int]]) -> None:
-    for goal in goal_positions:
-        print("x: " + str(goal[1]) + ", y: " + str(goal[0]))
-
-def print_mapf_instance(map: list[list[bool]], starts: list[tuple[int, int]], goals: Optional[list[tuple[int, int]]] = None) -> None:
-    print("Start locations")
-    print_locations(map, starts)
-    if (goals != None):
-        print("Goal locations")
-        print_locations(map, goals)
 
 def solve_instance(file: str, args: list) -> None:
     if (args.save_output):
