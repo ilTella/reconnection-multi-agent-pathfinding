@@ -10,7 +10,7 @@ def get_sum_of_cost(paths, goals,starts):
     rst = 0
     i = 0
     for path in paths:
-        print(path)
+        #print(path)
         t = 1
         first_goal_index = 0
         j = 0
