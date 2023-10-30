@@ -22,7 +22,6 @@ def are_nodes_a_clique(nodes: list[tuple[int, int]], connectivity_graph: dict[tu
 
 def find_all_cliques(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], num_of_agents: int) -> list[list[tuple[int, int]]]:
     cliques = []
-    discarded = []
 
     for k in connectivity_graph.keys():
         for comb in combinations(connectivity_graph[k], num_of_agents - 1):
@@ -30,8 +29,6 @@ def find_all_cliques(connectivity_graph: dict[tuple[int, int], list[tuple[int, i
             candidate.append(k)
             candidate.sort()
             if candidate in cliques:
-                continue
-            if candidate in discarded:
                 continue
             if are_nodes_a_clique(candidate, connectivity_graph):
                 cliques.append(candidate)
