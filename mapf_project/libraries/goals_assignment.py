@@ -6,6 +6,23 @@ from itertools import permutations
 import multiprocessing
 import time
 
+def search_goals_assignment_greedy(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    new_goals = []
+    agents_to_assign = []
+    
+    for i in range(len(starts)):
+        agents_to_assign.append(i)
+    
+    for agent in agents_to_assign:
+        distances_to_goals = []
+        for goal in goal_positions:
+            heuristics = compute_heuristics(map, goal)
+            path_length = get_shortest_path_length(map, starts[agent], goal, heuristics)
+            distances_to_goals.append((goal, path_length))
+        distances_to_goals = sorted(distances_to_goals, key=lambda element: element[1])
+        new_goals.append(distances_to_goals[0][0])
+        goal_positions.remove(distances_to_goals[0][0])
+
 def search_goals_assignment_exhaustive_search_astar(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     '''
     Explores every permutation of the goals assignment so the optimal solution (considering only single agent path lengths and not collisions between them) is garanteed,
@@ -146,7 +163,7 @@ def search_goals_assignment_cbs(map: list[list[bool]], starts: list[tuple[int, i
 
     return new_goals
 
-def get_path_length_matrix(map, starts, goal_positions):
+def get_path_length_matrix(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[list[int]]:
     path_length_matrix = []
     for _ in range(len(starts)):
         path_length_matrix.append([])
@@ -158,7 +175,7 @@ def get_path_length_matrix(map, starts, goal_positions):
  
     return path_length_matrix
 
-def get_assignment_cost_astar(path_length_matrix, assignment):
+def get_assignment_cost_astar(path_length_matrix: list[list[int]], assignment: list[int]) -> int:
     total = 0
 
     i = 0
@@ -168,7 +185,7 @@ def get_assignment_cost_astar(path_length_matrix, assignment):
 
     return total
 
-def get_assignment_cost_cbs(map, starts, goal_positions, assignment, currentCost, returnValue):
+def get_assignment_cost_cbs(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]], assignment: list[int], currentCost: int, returnValue: dict) -> int:
     goals = []
     for i in assignment:
         goals.append(goal_positions[i])
@@ -184,7 +201,7 @@ def get_assignment_cost_cbs(map, starts, goal_positions, assignment, currentCost
 
     returnValue["value"] = cost
 
-def swap_assigment_indexes(assignment, index1, index2):
+def swap_assigment_indexes(assignment: list[int], index1: int, index2: int) -> None:
     temp = assignment[index1]
     assignment[index1] = assignment[index2]
     assignment[index2] = temp

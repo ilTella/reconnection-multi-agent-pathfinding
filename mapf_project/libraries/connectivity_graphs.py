@@ -3,6 +3,7 @@ from .enums import ConnectionCriterion
 from .single_agent_planner import compute_heuristics
 from .utils import get_euclidean_distance, get_shortest_path_length
 from pathlib import Path
+from itertools import combinations
 import re
 
 '''
@@ -18,6 +19,32 @@ def are_nodes_a_clique(nodes: list[tuple[int, int]], connectivity_graph: dict[tu
                 return False
 
     return True
+
+def find_all_cliques(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], num_of_agents: int) -> list[list[tuple[int, int]]]:
+    cliques = []
+    discarded = []
+
+    for k in connectivity_graph.keys():
+        for comb in combinations(connectivity_graph[k], num_of_agents - 1):
+            candidate = list(comb)
+            candidate.append(k)
+            candidate.sort()
+            if candidate in cliques:
+                continue
+            if candidate in discarded:
+                continue
+            if are_nodes_a_clique(candidate, connectivity_graph):
+                cliques.append(candidate)
+
+    return cliques
+
+def find_a_clique(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], num_of_agents: int) -> list[list[tuple[int, int]]]:
+    for k in connectivity_graph.keys():
+        for comb in combinations(connectivity_graph[k], num_of_agents - 1):
+            candidate = list(comb)
+            candidate.append(k)
+            if are_nodes_a_clique(candidate, connectivity_graph):
+                return candidate
 
 def are_nodes_connected(map: list[list[bool]], x1: int, y1: int, x2: int, y2: int, args: list) -> bool:
     connected = False
@@ -39,6 +66,27 @@ def are_nodes_connected(map: list[list[bool]], x1: int, y1: int, x2: int, y2: in
         raise RuntimeError("Unknown connection criterion: " + args.connection_criterion)
     
     return connected
+
+def get_reduced_connectivity_graph(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], num_of_agents: int) -> dict[tuple[int, int], list[tuple[int, int]]]:
+    reduced_connectivity_graph = connectivity_graph.copy()
+
+    changed = True
+    while (changed):
+        changed = False
+
+        values_to_remove = []
+        for k in connectivity_graph.keys():
+            if k in reduced_connectivity_graph.keys():
+                if len(connectivity_graph[k]) + 1 < num_of_agents:
+                    reduced_connectivity_graph.pop(k)
+                    values_to_remove.append(k)
+                    changed = True
+
+        for v in values_to_remove:
+            for k in reduced_connectivity_graph:
+                if v in reduced_connectivity_graph[k]: reduced_connectivity_graph[k].remove(v)
+
+    return reduced_connectivity_graph
 
 def generate_connectivity_graph(map: list[list[bool]], args: list) -> dict[tuple[int, int], list[tuple[int, int]]]:
     connectivity_graph = {}

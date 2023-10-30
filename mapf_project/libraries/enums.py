@@ -1,7 +1,9 @@
 from enum import Enum
 
 class GoalsChoice(Enum):
-    GREEDY_MINIMIZE_DISTANCE = 1            # incomplete, suboptimal
+    GREEDY = 1                              # incomplete, suboptimal
+    COMPLETE = 2                            # complete, suboptimal
+    MINIMIZE_MEAN_DISTANCE = 3              # complete, suboptimal
 
 class GoalsAssignment(Enum):
     ARBITRARY = 1                           # suboptimal

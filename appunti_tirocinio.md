@@ -48,20 +48,15 @@ Il requisito di connessione ha un corrispettivo in situazioni reali tali per cui
 ### Algoritmo da me sviluppato
 
 Per prima cosa prendo in esame un'istanza di problema, cioè una mappa, definita dalle sue dimensioni (lunghezza e larghezza) e dalla posizione degli ostacoli, e le posizioni di partenza e di goal degli agenti.
+Le posizioni di goal vengono ignorate, in quanto verranno generate.
 
-A questo punto genero il grafo di connessione a partire dalla mappa, utilizzando una definizione di connessione.
+A questo punto genero il grafo di connessione a partire dalla mappa, utilizzando una definizione di connessione, oppure ne importo uno.
 L'assunzione più semplice è che tutti i vertici siano connessi, ma ciò è inutile; una definizione più interessante è basata sulla distanza: se due vertici hanno una distanza minore di un certo parametro, allora sono connessi.
-Una definizione più complessa combina la distanza tra vertici e gli ostacoli posti tra loro: due vertici sono connessi se tra loro la distanza è minore di un certo parametro, e la distanza è considerata maggiore se ci sono ostacoli sulla linea immaginaria che li congiunge.
-Ciò cerca di simulare un segnale wireless che si indebolisce se deve passare attraverso superfici solide.
+Una terza definizione di connessione considera sempre la distanza, ma la calcola utilizzando l'algoritmo A*.
 
-Se si considerano gli ostacoli tra due vertici per determinarne la connessione, ho fatto in modo che un ostacolo abbia un peso maggiore se blocca totalmente la linea diretta che li congiunge, mentre ha un peso ridotto se la linea passa solo parzialmente attraverso esso.
-In questo modo si può simulare meglio l'indebolimento del segnale, che sarà maggior all'aumentare della massa solida da attraversare.
-
-Successivamente utilizzo il grafo di connessione creato per trovare n goal (dove n è il numero di agenti) che rispettino le condizioni stabilite, quindi che siano o tutti connessi, oppure connessi tramite al massimo k intermediari.
-Posso servirmi delle posizioni di partenza per cercare di trovare un gruppo di vertici vicino agli agenti.
+Successivamente utilizzo il grafo di connessione creato per trovare n goal (dove n è il numero di agenti) che formino una cricca, ossia siano tutti connessi tra loro.
 
 Il passo successivo consiste nell'assegnare ogni goal ad un agente.
-Posso farlo in modo arbitrario, oppure cercando di minimizzare il costo del percorso di ogni agente, oppure il costo medio per tutti gli agenti.
 
 Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l'istanza modificata del problema ad un risolutore che utilizzi l'algoritmo CBS, e ottenere così una soluzione al problema.
 
@@ -79,10 +74,8 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         <td>
             <ul>
                 <li><b>Connessione totale</b>: tutti i nodi sono connessi tra loro</li>
-                <li><b>Distanza</b>: due nodi sono connessi se non più distanti di un parametro d</li>
-                <li><b>Distanza ed ostacoli</b>: due nodi sono connessi se non più distanti di un parametro d.<br>
-                La distanza è considerata aumentata se tra loro ci sono ostacoli.<br>
-                Un ostacolo che copre pienamente il segmento che li unisce (sul quale viene calcolata la distanza) pesa più di uno che lo copre parzialmente</li>
+                <li><b>Distanza euclidea</b>: due nodi sono connessi se la loro distanza euclidea è inferiore o uguale ad un parametro</li>
+                <li><b>Lunghezza path</b>: due nodi sono connessi se il costo del percorso calcolato da A* tra i due è inferiore o uguale ad un parametro</li>
             </ul>
         </td>
     </tr>
@@ -92,21 +85,8 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         </td>
         <td>
             <ul>
-                <li><b>Random</b>: i nodi di goal sono scelti rispettando solamente il requisito di connettività </li>
-                <li><b>Distanza minima</b>: i nodi di goal sono scelti rispettando il requisito di connettività, ma anche cercando nodi che siano il meno distanti possibile dagli agenti</li>
+                <li><b>Greedy</b>: si cerca una cricca di n nodi con un approccio greedy. L'algoritmo non solo è subottimale ma è anche incompleto</li>
             </ul>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Requisito di connettività
-        </td>
-        <td>
-           <ul>
-                <li><b>Tutti connessi</b>: tutti gli agenti, giunti ai nodi di goal, devono essere connessi tra loro</li>
-                <li><b>Connessione indiretta</b>: giunti ai nodi di goal, gli agenti non devono necessariamente essere tutti connessi tra loro direttamente.<br>
-                Un agente A riesce a comunicare con un agente B anche se entrambi sono connessi ad un agente C, senza che A e B lo siano direttamente tra loro</li>
-           </ul>
         </td>
     </tr>
     <tr>
@@ -115,24 +95,20 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         </td>
         <td>
             <ul>
-                <li><b>Random</b>: i nodi di goal sono assegnati agli agenti in modo arbitrario</li>
-                <li><b>Distanza minima</b>: utilizzando un approccio greedy, si cerca di assegnare ogni nodo di goal all'agente che si trova più vicino ad esso</li>
+                <li><b>Arbitraria</b>: la lista di nodi di goal individuati viene accettata nell'ordine in cui è</li>
+                <li><b>Random</b>: l'ordine dei nodi di goal viene randomizzato</li>
+                <li><b>Greedy</b>: viene utilizzato un algoritmo greedy per assegnare ogni nodo di goal all'agente più vicino ad esso</li>
+                <li><b>Ricerca esaustiva con A*</b>: si utilizza A* per calcolare il costo del percorso tra ogni agente e ogni nodo di goal, poi si esamina ogni permutazione possibile dell'assegnamento dei nodi e si restituisce quello con costo totale minimo</li>
+                <li><b>Minimizza distanza con A*</b>: si utilizza A* per calcolare il costo del percorso tra ogni agente e ogni nodo di goal, poi si cerca la permutazione dell'assegnamento dei nodi di goal con costo minimo scambiando di volta in volta due agenti, proseguendo finchè non ci sono più direzioni di miglioramento</li>
+                <li><b>Minimizza distanza con CBS</b>: si cerca la permutazione dell'assegnamento dei nodi di goal con costo minimo scambiando di volta in volta due agenti, proseguendo finchè non ci sono più direzioni di miglioramento. Per calcolare il costo dell'assegnamento si risolve usando CBS</li>
             </ul>
         </td>
     </tr>
 </table>
 
-Passando il problema modificato al risolutore CBS si è verificata un'anomalia con l'istanza `/instances/test_1.txt`.
-L'algoritmo permetteva ad alcuni agenti di collidere tra loro.
-
-A parte questo strano comportamento, si può notare come modificando l'istanza del problema con l'algoritmo sviluppato, il CBS impieghi meno tempo per trovare una soluzione.
-Ci sono delle eccezioni: istanze difficili per il quale l'algoritmo CBS impiega centinaia o migliaia di iterazioni per trovare una soluzione accettabile.
-
 #### Statistiche
 
-Per quanto riguarda la somma dei costi dei cammini, si può verificare come generando nuovi nodi di goal tramite l'algoritmo creato, la somma dei costi in media diminuisca.
-Su 50 test, solo in 6 casi hanno un costo totale minore i cammini con i goal originari, più 3 casi in cui con i nuovi goal l'algoritmo non termina in un tempo ragionevole.
-Negli altri 41 casi, il nuovo problema ha una soluzione con costo totale inferiore e spesso non di poco.
+(Da rivedere)
 
 #### Problemi
 
