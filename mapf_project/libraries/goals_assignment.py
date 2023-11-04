@@ -1,10 +1,7 @@
-from .single_agent_planner import compute_heuristics, get_sum_of_cost
+from .single_agent_planner import compute_heuristics
 from .utils import get_shortest_path_length
-from .cbs import CBSSolver
 from random import shuffle, seed
 from itertools import permutations
-import multiprocessing
-import time
 
 def search_goals_assignment_greedy(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     new_goals = []
@@ -23,7 +20,7 @@ def search_goals_assignment_greedy(map: list[list[bool]], starts: list[tuple[int
         new_goals.append(distances_to_goals[0][0])
         goal_positions.remove(distances_to_goals[0][0])
 
-def search_goals_assignment_exhaustive_search_astar(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+def search_goals_assignment_exhaustive_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     '''
     Explores every permutation of the goals assignment so the optimal solution (considering only single agent path lengths and not collisions between them) is garanteed,
     it is however only praticable for small instances of the problem
@@ -49,9 +46,9 @@ def search_goals_assignment_exhaustive_search_astar(map: list[list[bool]], start
     for i in best_assignment:
         new_goals.append(goal_positions[i])
 
-    return new_goals
+    return new_goals, best_cost
 
-def search_goals_assignment_astar(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     new_goals = []
 
     path_length_matrix = get_path_length_matrix(map, starts, goal_positions)
@@ -59,6 +56,7 @@ def search_goals_assignment_astar(map: list[list[bool]], starts: list[tuple[int,
     initial_assignment = []
     for i in range(len(goal_positions)):
         initial_assignment.append(i)
+    seed()
     shuffle(initial_assignment)
 
     cost = get_assignment_cost_astar(path_length_matrix, initial_assignment)
@@ -91,77 +89,12 @@ def search_goals_assignment_astar(map: list[list[bool]], starts: list[tuple[int,
                         break
                 else:
                     continue
-                break
+                break 
 
     for i in chosen_assignment:
         new_goals.append(goal_positions[i])
 
-    return new_goals
-
-def search_goals_assignment_cbs(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    new_goals = []
-
-    initial_assignment = []
-    for i in range(len(goal_positions)):
-        initial_assignment.append(i)
-    shuffle(initial_assignment)
-
-    manager = multiprocessing.Manager()
-    returnValue = manager.dict()
-    returnValue["value"] = -1
-    while (returnValue["value"] == -1):
-        p = multiprocessing.Process(target=get_assignment_cost_cbs, name="Get assignment cost", args=(map, starts, goal_positions, initial_assignment, 1000, returnValue))
-        p.start()
-        counter = 0
-        while (counter < 5):
-            time.sleep(1)
-            counter += 1
-            if (not p.is_alive()):
-                break
-        if (p.is_alive()):
-            seed()
-            shuffle(initial_assignment)
-            p.terminate()
-        p.join()
-    cost = returnValue["value"]
-
-
-    explored_assignments = {}
-    explored_assignments[tuple(initial_assignment)] = cost
-
-    chosen_assignment = initial_assignment
-    candidate_assignments = [initial_assignment]
-
-    while (len(candidate_assignments) >= 1):
-        assignment = candidate_assignments.pop()
-
-        go_on = True
-        while(go_on):
-            go_on = False
-            for i in range(len(assignment)):
-                for j in range(i + 1, len(assignment)):
-                    new_assignment = swap_assigment_indexes(assignment.copy(), i, j)
-                    if tuple(new_assignment) in explored_assignments:
-                        continue
-                    get_assignment_cost_cbs(map, starts, goal_positions, new_assignment, cost, returnValue)
-                    new_cost = returnValue["value"]
-                    explored_assignments[tuple(new_assignment)] = new_cost
-                    if new_cost == cost:
-                        candidate_assignments.append(new_assignment)
-                    elif new_cost < cost:
-                        candidate_assignments = [new_assignment]
-                        chosen_assignment = new_assignment
-                        cost = new_cost
-                        go_on = True
-                        break
-                else:
-                    continue
-                break
-
-    for i in chosen_assignment:
-        new_goals.append(goal_positions[i])
-
-    return new_goals
+    return new_goals, cost
 
 def get_path_length_matrix(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[list[int]]:
     path_length_matrix = []
@@ -184,22 +117,6 @@ def get_assignment_cost_astar(path_length_matrix: list[list[int]], assignment: l
         i += 1
 
     return total
-
-def get_assignment_cost_cbs(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]], assignment: list[int], currentCost: int, returnValue: dict) -> int:
-    goals = []
-    for i in assignment:
-        goals.append(goal_positions[i])
-    
-    cbs = CBSSolver(map, starts, goals, maxCost=currentCost, costLimit=True, doPrint=False)
-    try:
-        paths = cbs.find_solution(disjoint=False)
-    except Warning:
-        returnValue["value"] = currentCost + 1
-        return
-
-    cost = get_sum_of_cost(paths, goals, starts)
-
-    returnValue["value"] = cost
 
 def swap_assigment_indexes(assignment: list[int], index1: int, index2: int) -> None:
     temp = assignment[index1]

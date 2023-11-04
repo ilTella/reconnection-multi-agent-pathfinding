@@ -6,7 +6,7 @@ import sys
 from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
-from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_greedy, search_goals_assignment_astar, search_goals_assignment_exhaustive_search_astar, search_goals_assignment_cbs
+from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_greedy, search_goals_assignment_local_search, search_goals_assignment_exhaustive_search
 from libraries.goals_choice import search_goal_positions_minimize_mean_distance, search_goal_positions_complete, search_goal_positions_greedy, print_goal_positions
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance
@@ -51,14 +51,11 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
     elif args.goals_assignment == GoalsAssignment.GREEDY.name:
         new_goals = search_goals_assignment_greedy(map, starts, goal_positions)
 
-    elif args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH_ASTAR.name:
-        new_goals = search_goals_assignment_exhaustive_search_astar(map, starts, goal_positions)
+    elif args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH.name:
+        new_goals = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
 
-    elif args.goals_assignment == GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name:
-        new_goals = search_goals_assignment_astar(map, starts, goal_positions)
-
-    elif args.goals_assignment == GoalsAssignment.MINIMIZE_DISTANCE_CBS.name:
-        new_goals = search_goals_assignment_cbs(map, starts, goal_positions)
+    elif args.goals_assignment == GoalsAssignment.LOCAL_SEARCH.name:
+        new_goals = search_goals_assignment_local_search(map, starts, goal_positions)
 
     else:
         raise(RuntimeError("Unknown goals assignment algorithm."))
@@ -73,6 +70,7 @@ def solve_instance(file: str, args: list) -> None:
         path = "./outputs/" + file_id + ".txt"
         f = open(path, 'w')
         sys.stdout = f
+        sys.stderr = f
 
     start_time = time.time()
 
@@ -123,14 +121,14 @@ if __name__ == '__main__':
                         help='The name of the instance file(s)')
     parser.add_argument('--goals_choice', type=str, default=GoalsChoice.MINIMIZE_MEAN_DISTANCE.name, choices=[GoalsChoice.GREEDY.name, GoalsChoice.COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name],
                         help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.MINIMIZE_MEAN_DISTANCE.name)
-    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH_ASTAR.name, GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name, GoalsAssignment.MINIMIZE_DISTANCE_CBS.name],
-                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.MINIMIZE_DISTANCE_ASTAR.name)
+    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.LOCAL_SEARCH.name, GoalsAssignment.MINIMIZE_DISTANCE_CBS.name],
+                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
     parser.add_argument('--connectivity_graph', type=str, default=None,
                         help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')
     parser.add_argument('--connection_criterion', type=str, default=ConnectionCriterion.PATH_LENGTH.name, choices=[ConnectionCriterion.NONE.name, ConnectionCriterion.DISTANCE.name, ConnectionCriterion.PATH_LENGTH.name],
                         help='The connection definition used to generate a connectivity graph, defaults to ' + ConnectionCriterion.PATH_LENGTH.name)
     parser.add_argument('--connection_distance', type=float, default=3,
-                        help='The Euclidean distance used to define a connection, when using connection criteria based on distance between nodes, defaults to ' + str(3))
+                        help='The distance used to define a connection, when using connection criteria based on distance between nodes, defaults to ' + str(3))
     parser.add_argument('--solve', type=bool, default=False,
                         help='Decide to solve the instance using CBS or not, defaults to ' + str(False))
     parser.add_argument('--save_output', type=bool, default=False,

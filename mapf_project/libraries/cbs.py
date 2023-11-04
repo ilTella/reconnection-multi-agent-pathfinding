@@ -155,7 +155,7 @@ def disjoint_splitting(collision):
 class CBSSolver(object):
     """The high-level search of CBS."""
 
-    def __init__(self, my_map, starts, goals, maxCost=1000, costLimit=False, doPrint=True):
+    def __init__(self, my_map, starts, goals, doPrint=True):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -164,8 +164,6 @@ class CBSSolver(object):
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
-        self.maxCost = maxCost
-        self.costLimit = costLimit
         self.doPrint = doPrint
         
         self.num_of_agents = len(goals)
@@ -341,11 +339,7 @@ class CBSSolver(object):
                             #q['paths'] = replaced_q_paths
                             new_collisions = detect_collisions(replaced_q_paths)
                             q['collisions'] = new_collisions
-                            cost = get_sum_of_cost(replaced_q_paths,self.goals,self.starts)
-                            q['cost'] = cost
-                            if self.costLimit:
-                                if cost > self.maxCost:
-                                    raise Warning("Cost limit exceeded")
+                            q['cost'] = get_sum_of_cost(replaced_q_paths,self.goals,self.starts)
                 if disjoint:
                     violate = len(self.paths_violate_constraint(constraint, q['paths']))
                     if violate == 0:

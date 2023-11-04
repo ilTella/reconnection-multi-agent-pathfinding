@@ -1,4 +1,5 @@
 outputs/
+testing/
 results.csv
 results_cg.csv
 __pycache__/
