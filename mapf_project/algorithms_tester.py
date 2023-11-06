@@ -3,17 +3,76 @@ import glob
 import multiprocessing
 import time
 import sys
+import math
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance, get_cbs_cost
-from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph
+from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, find_all_cliques
 from libraries.goals_choice import print_goal_positions, search_goal_positions_minimize_mean_distance
 from libraries.goals_assignment import search_goals_assignment_exhaustive_search, search_goals_assignment_local_search
 
 TESTER_TIMEOUT = 10
 
 def get_goal_positions(map, starts, connectivity_graph):
+    cliques = find_all_cliques(connectivity_graph, len(starts))
+    print("Cliques found: " + str(len(cliques)) + "\n")
+
+    cliques_cbs_costs = []
+
+    real_cost = multiprocessing.Value('i', 0)
+    i = 0
+
+    print("clique | CBS cost of goal assignment found with local search")
+    for clique in cliques:
+        i += 1
+        goal_positions_temp = []
+        for n in clique:
+            goal_positions_temp.append((n[1], n[0]))
+        goal_assignment_temp, _ = search_goals_assignment_local_search(map, starts, goal_positions_temp)
+        
+        p = multiprocessing.Process(target=get_cbs_cost, name="Get CBS cost", args=(map, starts, goal_assignment_temp, real_cost))
+        p.start()
+        counter = 0
+        while (counter < TESTER_TIMEOUT):
+            time.sleep(1)
+            counter += 1
+            if (not p.is_alive()):
+                break
+        if (p.is_alive()):
+            real_cost.value = -1
+            p.terminate()
+        else:
+            cliques_cbs_costs.append((clique, real_cost.value))
+        print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value))
+        p.join()
+    print()
+
+    cliques_cbs_costs.sort(key=lambda el: el[1])
+
+    best_clique = cliques_cbs_costs[0]
+    worst_clique = cliques_cbs_costs[-1]
+
     goal_positions = search_goal_positions_minimize_mean_distance(map, starts, connectivity_graph)
+
+    goal_positions_clique = []
+    for n in goal_positions:
+        goal_positions_clique.append((n[1], n[0]))
+    goal_positions_clique.sort()
+    goal_positions_cost = 0
+
+    for el in cliques_cbs_costs:
+        label = ""
+        if el == best_clique: label = " BEST"
+        if el == worst_clique: label = " WORST"
+        if el[0] == goal_positions_clique:
+            label = " *chosen clique*"
+            goal_positions_cost = el[1]
+        print(str(el) + label)
+    print()
+
+    opt_factor = round(1 - ((goal_positions_cost - best_clique[1]) / (worst_clique[1] - best_clique[1])), 2)
+    print("Optimality: " + str(opt_factor) + "\n")
+
     return goal_positions
 
 def get_goals_assignment(map, starts, goal_positions):
