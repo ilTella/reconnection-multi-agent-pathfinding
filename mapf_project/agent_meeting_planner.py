@@ -52,10 +52,10 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
         new_goals = search_goals_assignment_greedy(map, starts, goal_positions)
 
     elif args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH.name:
-        new_goals = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
+        new_goals, _ = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
 
     elif args.goals_assignment == GoalsAssignment.LOCAL_SEARCH.name:
-        new_goals = search_goals_assignment_local_search(map, starts, goal_positions)
+        new_goals, _ = search_goals_assignment_local_search(map, starts, goal_positions)
 
     else:
         raise(RuntimeError("Unknown goals assignment algorithm."))
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                         help='The name of the instance file(s)')
     parser.add_argument('--goals_choice', type=str, default=GoalsChoice.MINIMIZE_MEAN_DISTANCE.name, choices=[GoalsChoice.GREEDY.name, GoalsChoice.COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name],
                         help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.MINIMIZE_MEAN_DISTANCE.name)
-    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.LOCAL_SEARCH.name, GoalsAssignment.MINIMIZE_DISTANCE_CBS.name],
+    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.LOCAL_SEARCH.name],
                         help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
     parser.add_argument('--connectivity_graph', type=str, default=None,
                         help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')
