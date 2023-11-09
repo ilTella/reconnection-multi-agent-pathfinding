@@ -46,7 +46,7 @@ def import_mapf_instance(filename):
     columns = int(columns)
     # #rows lines with the map
     my_map = []
-    for r in range(rows):
+    for _ in range(rows):
         line = f.readline()
         my_map.append([])
         for cell in line:
@@ -60,11 +60,16 @@ def import_mapf_instance(filename):
     # #agents lines with the start/goal positions
     starts = []
     goals = []
-    for a in range(num_agents):
+    for _ in range(num_agents):
         line = f.readline()
-        sx, sy, gx, gy = [int(x) for x in line.split(' ')]
-        starts.append((sx, sy))
-        goals.append((gx, gy))
+        line_content = line.split(' ')
+        if len(line_content) == 2:
+            sx, sy = [int(x) for x in line_content]
+            starts.append((sx, sy))
+        elif  len(line_content) == 4:
+            sx, sy, gx, gy = [int(x) for x in line_content]
+            starts.append((sx, sy))
+            goals.append((gx, gy))
     f.close()
     return my_map, starts, goals
 
