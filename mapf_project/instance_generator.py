@@ -88,7 +88,7 @@ if __name__ == '__main__':
                         help='Size of the instance, defaults to 8')
     parser.add_argument('--density', type=int, default=10, choices=range(0, 40, 10),
                         help='Obstacles density, defaults to 10(%)')
-    parser.add_argument('--agents', type=int, default=5, choices=range(5, 15),
+    parser.add_argument('--agents', type=int, default=5, choices=range(5, 16),
                         help='Number of agents, defaults to 5')
     args = parser.parse_args()
 
@@ -100,6 +100,3 @@ if __name__ == '__main__':
     if response == "y":
         file_name = input("File name?\t")
         save_output(map, agents_positions, args, file_name)
-
-
-    
