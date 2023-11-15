@@ -3,6 +3,23 @@ import math
 import random
 import sys
 
+def fill_holes(map: list[list[bool]], size: int) -> list[list[bool]]:
+    for x in range(size):
+        for y in range(size):
+            if map[x][y] == False:
+                free_spaces = False
+                if x + 1 < size:
+                    if map[x+1][y] == False: free_spaces = True
+                if x - 1 >= 0:
+                    if map[x-1][y] == False: free_spaces = True
+                if y + 1 < size:
+                    if map[x][y+1] == False: free_spaces = True
+                if y - 1 >= 0:
+                    if map[x][y-1] == False: free_spaces = True
+                if free_spaces == False:
+                    map[x][y] = True
+    return map
+
 def generate_map(size: int, density: int) -> list[list[bool]]:
     random.seed()
 
@@ -24,6 +41,8 @@ def generate_map(size: int, density: int) -> list[list[bool]]:
         map[x][y] = True
         num_of_obstacles -= 1
     
+    map = fill_holes(map, size)
+
     return map
 
 def generate_agents_start_positions(map: list[list[bool]], num_of_agents: int, size: int) -> list[tuple[int, int]]:
