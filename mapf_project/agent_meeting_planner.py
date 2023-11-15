@@ -7,7 +7,7 @@ from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
 from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_greedy, search_goals_assignment_local_search, search_goals_assignment_exhaustive_search
-from libraries.goals_choice import search_goal_positions_minimize_mean_distance, search_goal_positions_complete, search_goal_positions_greedy, print_goal_positions
+from libraries.goals_choice import search_goal_positions_minimize_mean_distance, search_goal_positions_complete, search_goal_positions_greedy, print_goal_positions, search_goal_positions_improved_complete
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance
 from libraries.visualize import Enhanced_Animation
@@ -29,6 +29,9 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
 
     if args.goals_choice == GoalsChoice.COMPLETE.name:
         goal_positions = search_goal_positions_complete(map, starts, connectivity_graph)
+
+    if args.goals_choice == GoalsChoice.IMPROVED_COMPLETE.name:
+        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
 
     if args.goals_choice == GoalsChoice.MINIMIZE_MEAN_DISTANCE.name:
         goal_positions = search_goal_positions_minimize_mean_distance(map, starts, connectivity_graph)
@@ -119,8 +122,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Solve a MAPF agent meeting problem')
     parser.add_argument('--instance', type=str, default=None, required=True,
                         help='The name of the instance file(s)')
-    parser.add_argument('--goals_choice', type=str, default=GoalsChoice.MINIMIZE_MEAN_DISTANCE.name, choices=[GoalsChoice.GREEDY.name, GoalsChoice.COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name],
-                        help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.MINIMIZE_MEAN_DISTANCE.name)
+    parser.add_argument('--goals_choice', type=str, default=GoalsChoice.IMPROVED_COMPLETE.name, choices=[GoalsChoice.GREEDY.name, GoalsChoice.COMPLETE.name, GoalsChoice.IMPROVED_COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name],
+                        help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.IMPROVED_COMPLETE.name)
     parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.ARBITRARY.name, GoalsAssignment.RANDOM.name, GoalsAssignment.GREEDY.name, GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.LOCAL_SEARCH.name],
                         help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
     parser.add_argument('--connectivity_graph', type=str, default=None,

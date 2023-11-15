@@ -35,27 +35,27 @@ def find_all_cliques(connectivity_graph: dict[tuple[int, int], list[tuple[int, i
 
     return cliques
 
-def find_a_clique(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], num_of_agents: int) -> list[list[tuple[int, int]]]:
-    for k in connectivity_graph.keys():
+def find_a_clique(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], keys_list: list[tuple[int, int]], num_of_agents: int) -> list[list[tuple[int, int]]]:
+    for k in keys_list:
         for comb in combinations(connectivity_graph[k], num_of_agents - 1):
             candidate = list(comb)
             candidate.append(k)
             if are_nodes_a_clique(candidate, connectivity_graph):
                 return candidate
 
-def are_nodes_connected(map: list[list[bool]], x1: int, y1: int, x2: int, y2: int, args: list) -> bool:
+def are_nodes_connected(map: list[list[bool]], start_x: int, start_y: int, dest_x: int, dest_y: int, args: list) -> bool:
     connected = False
 
     if args.connection_criterion == ConnectionCriterion.NONE.name:
         connected = True
 
     elif args.connection_criterion == ConnectionCriterion.DISTANCE.name:
-        if get_euclidean_distance(x1, y1, x2, y2) <= args.connection_distance:
+        if get_euclidean_distance(start_x, start_y, dest_x, dest_y) <= args.connection_distance:
             connected = True
 
     elif args.connection_criterion == ConnectionCriterion.PATH_LENGTH.name:
-        heuristics = compute_heuristics(map, (y2, x2))
-        path_len = get_shortest_path_length(map, (y1, x1), (y2, x2), heuristics)
+        heuristics = compute_heuristics(map, (dest_x, dest_y))
+        path_len = get_shortest_path_length(map, (start_x, start_y), (dest_x, dest_y), heuristics)
         if path_len <= math.floor(args.connection_distance):
             connected = True
 
@@ -100,7 +100,7 @@ def generate_connectivity_graph(map: list[list[bool]], args: list) -> dict[tuple
         for row in range(len(map)):
             for col in range(len(map[0])):
                 if ((x, y) != (col, row)) and (map[row][col] == False):
-                    if (are_nodes_connected(map, x, y, col, row, args) == True):
+                    if (are_nodes_connected(map, y, x, row, col, args) == True):
                         connectivity_graph[key].append((col, row))
 
     return connectivity_graph

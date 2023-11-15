@@ -7,7 +7,7 @@ from libraries.enums import ConnectionCriterion
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance, get_cbs_cost
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, find_all_cliques
-from libraries.goals_choice import print_goal_positions, search_goal_positions_minimize_mean_distance
+from libraries.goals_choice import print_goal_positions, search_goal_positions_minimize_mean_distance, search_goal_positions_improved_complete
 from libraries.goals_assignment import search_goals_assignment_exhaustive_search, search_goals_assignment_local_search
 
 TESTER_TIMEOUT = 10
@@ -39,11 +39,12 @@ def get_goal_positions(map, starts, connectivity_graph, args):
                 if (not p.is_alive()):
                     break
             if (p.is_alive()):
-                real_cost.value = -1
+                _, real_cost.value = search_goals_assignment_local_search(map, starts, goal_positions_temp)
+                print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value) + " (estimated)")
                 p.terminate()
             else:
-                cliques_cbs_costs.append((clique, real_cost.value))
-            print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value))
+                print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value))
+            cliques_cbs_costs.append((clique, real_cost.value))
             p.join()
         print()
 
@@ -52,12 +53,16 @@ def get_goal_positions(map, starts, connectivity_graph, args):
         best_clique = cliques_cbs_costs[0]
         worst_clique = cliques_cbs_costs[-1]
 
-        goal_positions = search_goal_positions_minimize_mean_distance(map, starts, connectivity_graph)
+        start_time = time.time()
+        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
+        relative_time = time.time() - start_time
 
         goal_positions_clique = []
         for n in goal_positions:
             goal_positions_clique.append((n[1], n[0]))
         goal_positions_clique.sort()
+        print(str(goal_positions_clique))
+        print("Goals positions search time (s):    {:.2f}\n".format(relative_time))
         goal_positions_cost = 0
 
         for el in cliques_cbs_costs:
@@ -73,8 +78,10 @@ def get_goal_positions(map, starts, connectivity_graph, args):
         opt_factor = round(1 - ((goal_positions_cost - best_clique[1]) / (worst_clique[1] - best_clique[1])), 2)
         print("Optimality: " + str(opt_factor) + "\n")
     else:
-        goal_positions = search_goal_positions_minimize_mean_distance(map, starts, connectivity_graph)
-
+        start_time = time.time()
+        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
+        relative_time = time.time() - start_time
+        print("Goals positions search time (s):    {:.2f}".format(relative_time))
     return goal_positions
 
 def get_goals_assignment(map, starts, goal_positions, args):
@@ -150,17 +157,11 @@ def solve_instance(file: str, args: list) -> None:
     else:
         connectivity_graph = generate_connectivity_graph(map, args)
 
-    start_time = time.time()
     goal_positions = get_goal_positions(map, starts, connectivity_graph, args)
     print_goal_positions(goal_positions)
-    relative_time = time.time() - start_time
-    print("Goal positions search time (s):    {:.2f}".format(relative_time))
     print()
 
-    start_time = time.time()
     new_goals = get_goals_assignment(map, starts, goal_positions, args)
-    relative_time = time.time() - start_time
-    print("Goals assignment search time (s):    {:.2f}".format(relative_time))
     CPU_time = time.time() - instance_start_time
     print("Total time (s):    {:.2f}".format(CPU_time))
     print()

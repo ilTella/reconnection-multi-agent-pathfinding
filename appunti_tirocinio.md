@@ -108,10 +108,7 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
 
 #### Statistiche
 
-(Da rivedere)
+La generazione del grafo di connettività è un processo arbitrario, che potrebbe essere svolto prima di risolvere l'istanza.
+Per istanze piccole il criterio di connessione PATH_LENGTH produce velocemente un risultato, mentre per istanze più grandi conviene usare DISTANCE.
 
-#### Problemi
-
-Istanze 36, 37, 38, 39 risultano non risolvibili: generano KeyError: (0, 0) durante la generazione del grafo di connettività.
-
-(solve_instance -> generate_connectivity_graph -> are_nodes_connected -> get_shortest_path_length -> a_star)
+Trovare ogni volta la cricca ottima e l'assegnamento ottimo è troppo dispendioso, ci si accontenta di una soluzione subottimale e grazie ai dati raccolti si verifica che questa non si discosti troppo dall'ottimo, col vantaggio di richiedere uno sforzo computazionale decisamente inferiore.

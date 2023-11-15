@@ -29,7 +29,26 @@ def search_goal_positions_complete(map: list[list[bool]], starts: list[tuple[int
 
     connectivity_graph = get_reduced_connectivity_graph(connectivity_graph, len(starts))
 
-    chosen_clique = find_a_clique(connectivity_graph, len(starts))
+    chosen_clique = find_a_clique(connectivity_graph, connectivity_graph.keys(), len(starts))
+
+    if chosen_clique != []:
+        for node in chosen_clique:
+            goal_positions.append((node[1], node[0]))
+
+    return goal_positions
+
+def search_goal_positions_improved_complete(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> list[tuple[int, int]]:
+    goal_positions = []
+
+    connectivity_graph = get_reduced_connectivity_graph(connectivity_graph, len(starts))
+
+    keys_with_cost = []
+    for k in connectivity_graph.keys():
+        keys_with_cost.append((k, get_distance_to_all_starting_locations(map, starts, (k[1], k[0]))))
+    keys_with_cost = sorted(keys_with_cost, key=lambda node: node[1])
+    keys = [k[0] for k in keys_with_cost]
+
+    chosen_clique = find_a_clique(connectivity_graph, keys, len(starts))
 
     if chosen_clique != []:
         for node in chosen_clique:
