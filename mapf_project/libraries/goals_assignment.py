@@ -3,6 +3,8 @@ from .utils import get_shortest_path_length
 from random import shuffle, seed
 from itertools import permutations
 
+LOCAL_SEARCH_TRAJECTORIES = 5
+
 def search_goals_assignment_greedy(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     new_goals = []
     agents_to_assign = []
@@ -49,52 +51,73 @@ def search_goals_assignment_exhaustive_search(map: list[list[bool]], starts: lis
     return new_goals, best_cost
 
 def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    seed()
     new_goals = []
 
     path_length_matrix = get_path_length_matrix(map, starts, goal_positions)
     
-    initial_assignment = []
-    for i in range(len(goal_positions)):
-        initial_assignment.append(i)
-    seed()
-    shuffle(initial_assignment)
+    initial_assignments_container = []
+    for _ in range(LOCAL_SEARCH_TRAJECTORIES):
+        initial_assignment = []
+        for i in range(len(goal_positions)):
+            initial_assignment.append(i)
+        shuffle(initial_assignment)
+        initial_assignments_container.append(initial_assignment)
 
-    cost = get_assignment_cost_astar(path_length_matrix, initial_assignment)
-    explored_assignments = {}
-    explored_assignments[tuple(initial_assignment)] = cost
+    costs = []
+    explored_assignments_container = []
+    for i in range(LOCAL_SEARCH_TRAJECTORIES):
+        costs.append(get_assignment_cost_astar(path_length_matrix, initial_assignments_container[i])) 
+        explored_assignments_container.append({})
+        explored_assignments_container[i][tuple(initial_assignments_container[i])] = costs[i]
 
-    chosen_assignment = initial_assignment
-    candidate_assignments = [initial_assignment]
+    chosen_assignments = []
+    for i in range(LOCAL_SEARCH_TRAJECTORIES):
+        chosen_assignments.append(initial_assignments_container[i])
 
-    while (len(candidate_assignments) >= 1):
-        assignment = candidate_assignments.pop()
+    candidate_assignments_container = []
+    for i in range(LOCAL_SEARCH_TRAJECTORIES):
+        candidate_assignments_container.append([initial_assignments_container[0]])
 
-        go_on = True
-        while(go_on):
-            go_on = False
-            for i in range(len(assignment)):
-                for j in range(i + 1, len(assignment)):
-                    new_assignment = swap_assigment_indexes(assignment.copy(), i, j)
-                    if tuple(new_assignment) in explored_assignments:
+    for traj in range(LOCAL_SEARCH_TRAJECTORIES):
+
+        while (len(candidate_assignments_container[traj]) >= 1):
+            assignment = candidate_assignments_container[traj].pop()
+
+            go_on = True
+            while(go_on):
+                go_on = False
+                for i in range(len(assignment)):
+                    for j in range(i + 1, len(assignment)):
+                        new_assignment = swap_assigment_indexes(assignment.copy(), i, j)
+                        if tuple(new_assignment) in explored_assignments_container[traj]:
+                            continue
+                        new_cost = get_assignment_cost_astar(path_length_matrix, new_assignment)
+                        explored_assignments_container[traj][tuple(new_assignment)] = new_cost
+                        if new_cost == costs[traj]:
+                            candidate_assignments_container[traj].append(new_assignment)
+                        elif new_cost < costs[traj]:
+                            candidate_assignments_container[traj] = [new_assignment]
+                            chosen_assignments[traj] = new_assignment
+                            costs[traj] = new_cost
+                            go_on = True
+                            break
+                    else:
                         continue
-                    new_cost = get_assignment_cost_astar(path_length_matrix, new_assignment)
-                    explored_assignments[tuple(new_assignment)] = new_cost
-                    if new_cost == cost:
-                        candidate_assignments.append(new_assignment)
-                    elif new_cost < cost:
-                        candidate_assignments = [new_assignment]
-                        chosen_assignment = new_assignment
-                        cost = new_cost
-                        go_on = True
-                        break
-                else:
-                    continue
-                break 
+                    break 
 
-    for i in chosen_assignment:
+    final_assignment = chosen_assignments[0]
+    final_cost = costs[0]
+
+    for i in range(LOCAL_SEARCH_TRAJECTORIES):
+        if costs[i] < final_cost:
+            final_cost = costs[i]
+            final_assignment = chosen_assignments[i]
+
+    for i in final_assignment:
         new_goals.append(goal_positions[i])
 
-    return new_goals, cost
+    return new_goals, final_cost
 
 def get_path_length_matrix(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[list[int]]:
     path_length_matrix = []
