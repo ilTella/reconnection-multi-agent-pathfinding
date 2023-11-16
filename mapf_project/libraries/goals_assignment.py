@@ -5,23 +5,6 @@ from itertools import permutations
 
 LOCAL_SEARCH_TRAJECTORIES = 5
 
-def search_goals_assignment_greedy(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    new_goals = []
-    agents_to_assign = []
-    
-    for i in range(len(starts)):
-        agents_to_assign.append(i)
-    
-    for agent in agents_to_assign:
-        distances_to_goals = []
-        for goal in goal_positions:
-            heuristics = compute_heuristics(map, goal)
-            path_length = get_shortest_path_length(map, starts[agent], goal, heuristics)
-            distances_to_goals.append((goal, path_length))
-        distances_to_goals = sorted(distances_to_goals, key=lambda element: element[1])
-        new_goals.append(distances_to_goals[0][0])
-        goal_positions.remove(distances_to_goals[0][0])
-
 def search_goals_assignment_exhaustive_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     '''
     Explores every permutation of the goals assignment so the optimal solution (considering only single agent path lengths and not collisions between them) is garanteed,

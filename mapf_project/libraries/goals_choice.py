@@ -1,28 +1,6 @@
 from .single_agent_planner import compute_heuristics
 from .utils import get_shortest_path_length
-from .connectivity_graphs import are_nodes_a_clique, get_reduced_connectivity_graph, find_all_cliques, find_a_clique
-
-def search_goal_positions_greedy(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> list[tuple[int, int]]:
-    goal_positions = []
-
-    keys = []
-    for k in connectivity_graph.keys():
-        if len(connectivity_graph[k]) + 1 >= len(starts):
-            keys.append(k)
-    keys = sorted(keys, key=lambda key: get_distance_to_all_starting_locations(map, starts, (key[1], key[0])))
-
-    for k in keys:
-        candidates = [k]
-        nodes = sorted(connectivity_graph[k], key=lambda node: get_distance_to_all_starting_locations(map, starts, (node[1], node[0])))
-        for n in nodes:
-            temp = candidates.copy()
-            temp.append(n)
-            if are_nodes_a_clique(temp, connectivity_graph):
-                candidates.append(n)
-            if len(candidates) >= len(starts):
-                for c in candidates:
-                    goal_positions.append((c[1], c[0]))
-                return goal_positions
+from .connectivity_graphs import get_reduced_connectivity_graph, find_all_cliques, find_a_clique
 
 def search_goal_positions_complete(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> list[tuple[int, int]]:
     goal_positions = []
