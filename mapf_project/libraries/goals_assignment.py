@@ -2,15 +2,11 @@ from .single_agent_planner import compute_heuristics
 from .utils import get_shortest_path_length
 from random import shuffle, seed
 from itertools import permutations
+import munkres
 
 LOCAL_SEARCH_TRAJECTORIES = 5
 
 def search_goals_assignment_exhaustive_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
-    '''
-    Explores every permutation of the goals assignment so the optimal solution (considering only single agent path lengths and not collisions between them) is garanteed,
-    it is however only praticable for small instances of the problem
-    '''
-    
     new_goals = []
 
     path_length_matrix = get_path_length_matrix(map, starts, goal_positions)
@@ -32,6 +28,20 @@ def search_goals_assignment_exhaustive_search(map: list[list[bool]], starts: lis
         new_goals.append(goal_positions[i])
 
     return new_goals, best_cost
+
+def search_goals_assignment_hungarian(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    new_goals = []
+    cost = 0
+
+    path_length_matrix = get_path_length_matrix(map, starts, goal_positions)
+
+    m = munkres.Munkres()
+    indexes = m.compute(path_length_matrix)
+    for row, col in indexes:
+        cost += path_length_matrix[row][col]
+        new_goals.append(goal_positions[col])
+
+    return new_goals, cost
 
 def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
     seed()

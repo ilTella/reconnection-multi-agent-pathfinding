@@ -6,7 +6,7 @@ import sys
 from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
-from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_exhaustive_search
+from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_exhaustive_search, search_goals_assignment_hungarian
 from libraries.goals_choice import search_goal_positions_minimize_mean_distance, search_goal_positions_complete, print_goal_positions, search_goal_positions_improved_complete
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance
@@ -43,6 +43,9 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
     if args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH.name:
         new_goals, _ = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
 
+    elif args.goals_assignment == GoalsAssignment.HUNGARIAN_ALGORITHM.name:
+        new_goals, _ = search_goals_assignment_hungarian(map, starts, goal_positions)
+
     elif args.goals_assignment == GoalsAssignment.LOCAL_SEARCH.name:
         new_goals, _ = search_goals_assignment_local_search(map, starts, goal_positions)
 
@@ -65,6 +68,8 @@ def solve_instance(file: str, args: list) -> None:
 
     print("*** Import an instance ***\n")
     print("Instance: " + file + "\n")
+    print("Goals choice: " + args.goals_choice)
+    print("Goals assignment: " + args.goals_assignment + "\n")
     map, starts, _ = import_mapf_instance(file)
     print_mapf_instance(map, starts)
 
@@ -110,7 +115,7 @@ if __name__ == '__main__':
                         help='The name of the instance file(s)')
     parser.add_argument('--goals_choice', type=str, default=GoalsChoice.IMPROVED_COMPLETE.name, choices=[GoalsChoice.COMPLETE.name, GoalsChoice.IMPROVED_COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name],
                         help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.IMPROVED_COMPLETE.name)
-    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.LOCAL_SEARCH.name],
+    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.HUNGARIAN_ALGORITHM.name, GoalsAssignment.LOCAL_SEARCH.name],
                         help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
     parser.add_argument('--connectivity_graph', type=str, default=None,
                         help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')

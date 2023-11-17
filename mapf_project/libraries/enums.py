@@ -7,7 +7,8 @@ class GoalsChoice(Enum):
 
 class GoalsAssignment(Enum):
     EXHAUSTIVE_SEARCH = 1
-    LOCAL_SEARCH = 2
+    HUNGARIAN_ALGORITHM = 2
+    LOCAL_SEARCH = 3
 
 class ConnectionCriterion(Enum):
     NONE = 1
