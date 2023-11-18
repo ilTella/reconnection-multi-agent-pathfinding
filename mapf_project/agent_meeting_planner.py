@@ -55,11 +55,11 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
     return new_goals
 
 def solve_instance(file: str, args: list) -> None:
+    file_name_sections = file.split("\\")
+    file_id = file_name_sections[-1].split(".")[0]
+    path = "./outputs/" + file_id + ".txt"
     if (args.save_output):
         print("Solving " + file)
-        file_name_sections = file.split("\\")
-        file_id = file_name_sections[-1].split(".")[0]
-        path = "./outputs/" + file_id + ".txt"
         f = open(path, 'w')
         sys.stdout = f
         sys.stderr = f
@@ -73,12 +73,13 @@ def solve_instance(file: str, args: list) -> None:
     map, starts, _ = import_mapf_instance(file)
     print_mapf_instance(map, starts)
 
-    if (args.connectivity_graph != None):
-        print("*** Import connectivity graph from file ***\n")
-        connectivity_graph = import_connectivity_graph(args.connectivity_graph)
-    else:
+    if (args.connectivity_graph):
         print("*** Generate connectivity graph ***\n")
         connectivity_graph = generate_connectivity_graph(map, args)
+    else:
+        print("*** Import connectivity graph from file ***\n")
+        cg_path = "./connectivity_graphs/" + file_id + ".txt"
+        connectivity_graph = import_connectivity_graph(cg_path)
     print_connectivity_graph(connectivity_graph)
     CPU_time = time.time() - start_time
     print("CPU time (s):    {:.2f}".format(CPU_time))
@@ -117,8 +118,8 @@ if __name__ == '__main__':
                         help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.IMPROVED_COMPLETE.name)
     parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.HUNGARIAN_ALGORITHM.name, GoalsAssignment.LOCAL_SEARCH.name],
                         help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
-    parser.add_argument('--connectivity_graph', type=str, default=None,
-                        help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')
+    parser.add_argument('--connectivity_graph', type=bool, default=False,
+                        help='Decide if you want to generate a connectivity graph for the instance or use one already generated, defaults to ' + str(False))
     parser.add_argument('--connection_criterion', type=str, default=ConnectionCriterion.PATH_LENGTH.name, choices=[ConnectionCriterion.NONE.name, ConnectionCriterion.DISTANCE.name, ConnectionCriterion.PATH_LENGTH.name],
                         help='The connection definition used to generate a connectivity graph, defaults to ' + ConnectionCriterion.PATH_LENGTH.name)
     parser.add_argument('--connection_distance', type=float, default=3,

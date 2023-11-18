@@ -7,7 +7,7 @@ from libraries.enums import ConnectionCriterion
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance, get_cbs_cost
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, find_all_cliques
-from libraries.goals_choice import print_goal_positions, search_goal_positions_minimize_mean_distance, search_goal_positions_improved_complete
+from libraries.goals_choice import print_goal_positions, search_goal_positions_improved_complete
 from libraries.goals_assignment import search_goals_assignment_exhaustive_search, search_goals_assignment_local_search
 
 TESTER_TIMEOUT = 10
@@ -136,12 +136,12 @@ def get_goals_assignment(map, starts, goal_positions, args):
     return goals_local_search
 
 def solve_instance(file: str, args: list) -> None:
+    file_name_sections = file.split("\\")
+    file_id = file_name_sections[-1].split(".")[0]
+    path = "./testing/" + file_id + ".txt"
     if (args.save_output):
         sys.stdout = sys.__stdout__
         print("Testing " + file)
-        file_name_sections = file.split("\\")
-        file_id = file_name_sections[-1].split(".")[0]
-        path = "./testing/" + file_id + ".txt"
         f = open(path, 'w')
         sys.stdout = f
         sys.stderr = f
@@ -152,10 +152,11 @@ def solve_instance(file: str, args: list) -> None:
     map, starts, _ = import_mapf_instance(file)
     print_mapf_instance(map, starts)
 
-    if (args.connectivity_graph != None):
-        connectivity_graph = import_connectivity_graph(args.connectivity_graph)
-    else:
+    if (args.connectivity_graph):
         connectivity_graph = generate_connectivity_graph(map, args)
+    else:
+        cg_path = "./connectivity_graphs/" + file_id + ".txt"
+        connectivity_graph = import_connectivity_graph(cg_path)
 
     goal_positions = get_goal_positions(map, starts, connectivity_graph, args)
     print_goal_positions(goal_positions)
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test')
     parser.add_argument('--instance', type=str, default=None, required=True,
                         help='The name of the instance file(s)')
-    parser.add_argument('--connectivity_graph', type=str, default=None,
-                        help='The name of the file containing the connectivity graph, if included it will be imported from said file instead of being generated')
+    parser.add_argument('--connectivity_graph', type=bool, default=False,
+                        help='Decide if you want to generate a connectivity graph for the instance or use one already generated, defaults to ' + str(False))
     parser.add_argument('--connection_criterion', type=str, default=ConnectionCriterion.PATH_LENGTH.name, choices=[ConnectionCriterion.NONE.name, ConnectionCriterion.DISTANCE.name, ConnectionCriterion.PATH_LENGTH.name],
                         help='The connection definition used to generate a connectivity graph, defaults to ' + ConnectionCriterion.PATH_LENGTH.name)
     parser.add_argument('--connection_distance', type=float, default=3,

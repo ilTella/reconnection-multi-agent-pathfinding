@@ -5,6 +5,7 @@ from .utils import get_euclidean_distance, get_shortest_path_length
 from pathlib import Path
 from itertools import combinations
 import re
+import sys
 
 '''
     'map' and other data structures/functions associated with external libraries use (row, col) to identify nodes,
@@ -132,6 +133,24 @@ def import_connectivity_graph(filename: str) -> dict[tuple[int, int], list[tuple
         connectivity_graph[key] = values
 
     return connectivity_graph
+
+def save_connectivity_graph(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], path: str) -> None:
+    f = open(path, 'w')
+    sys.stdout = f
+    sys.stderr = f
+    
+    for key in connectivity_graph.keys():
+        print("(" + str(key[0]) + " " + str(key[1]) + ") > ", end="")
+        i = 0
+        for node in connectivity_graph[key]:
+            print("(" + str(node[0]) + " " + str(node[1]) + ")", end="")
+            if i < len(connectivity_graph[key]) - 1:
+                print(",", end="")
+            i += 1
+        print()
+
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
 
 def print_connectivity_graph(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]]) -> None: 
     for key in connectivity_graph:
