@@ -75,7 +75,10 @@ def get_goal_positions(map, starts, connectivity_graph, args):
             print(str(el) + label)
         print()
 
-        opt_factor = round(1 - ((goal_positions_cost - best_clique[1]) / (worst_clique[1] - best_clique[1])), 2)
+        if worst_clique[1] - best_clique[1] == 0:
+            opt_factor = 1.0
+        else:
+            opt_factor = round(1 - ((goal_positions_cost - best_clique[1]) / (worst_clique[1] - best_clique[1])), 2)
         print("Optimality: " + str(opt_factor) + "\n")
     else:
         start_time = time.time()
