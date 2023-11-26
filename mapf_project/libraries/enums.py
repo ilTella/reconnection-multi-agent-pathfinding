@@ -4,6 +4,7 @@ class GoalsChoice(Enum):
     COMPLETE = 1
     IMPROVED_COMPLETE = 2
     MINIMIZE_MEAN_DISTANCE = 3
+    GENERATE_CLIQUE = 4
 
 class GoalsAssignment(Enum):
     EXHAUSTIVE_SEARCH = 1
