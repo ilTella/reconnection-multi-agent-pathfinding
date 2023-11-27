@@ -35,6 +35,9 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
     elif args.goals_choice == GoalsChoice.GENERATE_CLIQUE.name:
         goal_positions = search_goal_positions_generate_clique(map, starts, connectivity_graph)
 
+    else:
+        raise(RuntimeError("Unknown goals choice algorithm."))
+
     if len(goal_positions) < len(starts):
         raise(RuntimeError("This map doesn't have enough connected nodes for all its agents!"))
     

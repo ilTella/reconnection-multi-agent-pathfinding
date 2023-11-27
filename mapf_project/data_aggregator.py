@@ -15,10 +15,10 @@ def aggregate_data(args: list) -> None:
                     break
     
     print("Instances tested: " + str(len(optimality_values)))
-    mean = 0
+    sum = 0
     for v in optimality_values:
-        mean += v 
-    mean /= len(optimality_values)
+        sum += v 
+    mean = sum / len(optimality_values)
     mean = round(mean, 2)
     print("Mean optimality: " + str(mean))
 

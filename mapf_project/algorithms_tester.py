@@ -134,7 +134,10 @@ def get_goals_assignment(map, starts, goal_positions, args):
             print("Local search CBS cost: " + str(real_cost.value))
         p.join()
     else:
+        start_time = time.time()
         goals_local_search, _ = search_goals_assignment_local_search(map, starts, goal_positions)
+        search_time = time.time() - start_time
+        print("Local search time (s):    {:.2f}".format(search_time))
 
     return goals_local_search
 
