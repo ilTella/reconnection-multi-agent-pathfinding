@@ -7,8 +7,8 @@ from libraries.enums import ConnectionCriterion
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance, get_cbs_cost
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, find_all_cliques
-from libraries.goals_choice import print_goal_positions, search_goal_positions_improved_complete
-from libraries.goals_assignment import search_goals_assignment_exhaustive_search, search_goals_assignment_local_search
+from libraries.goals_choice import print_goal_positions, search_goal_positions_informed_generate_clique
+from libraries.goals_assignment import search_goals_assignment_local_search, search_goals_assignment_hungarian
 
 TESTER_TIMEOUT = 10
 
@@ -54,7 +54,7 @@ def get_goal_positions(map, starts, connectivity_graph, args):
         worst_clique = cliques_cbs_costs[-1]
 
         start_time = time.time()
-        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
+        goal_positions = search_goal_positions_informed_generate_clique(map, starts, connectivity_graph)
         relative_time = time.time() - start_time
 
         goal_positions_clique = []
@@ -82,7 +82,7 @@ def get_goal_positions(map, starts, connectivity_graph, args):
         print("Optimality: " + str(opt_factor) + "\n")
     else:
         start_time = time.time()
-        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
+        goal_positions = search_goal_positions_informed_generate_clique(map, starts, connectivity_graph)
         relative_time = time.time() - start_time
         print("Goals positions search time (s):    {:.2f}".format(relative_time))
     return goal_positions
@@ -90,14 +90,14 @@ def get_goal_positions(map, starts, connectivity_graph, args):
 def get_goals_assignment(map, starts, goal_positions, args):
     if args.test_subject == "goals_assignment" or args.test_subject == "both":
         start_time = time.time()
-        goals_exhaustive_search, heuristic_cost = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
-        print("Exhaustive search cost: " + str(heuristic_cost))
+        goals_hungarian, heuristic_cost = search_goals_assignment_hungarian(map, starts, goal_positions)
+        print("Hungarian algorithm cost: " + str(heuristic_cost))
         search_time = time.time() - start_time
-        print("Exhaustive search time (s):    {:.2f}".format(search_time))
+        print("Hungarian algorithm time (s):    {:.2f}".format(search_time))
 
         real_cost = multiprocessing.Value('i', 0)
 
-        p = multiprocessing.Process(target=get_cbs_cost, name="Get CBS cost", args=(map, starts, goals_exhaustive_search, real_cost))
+        p = multiprocessing.Process(target=get_cbs_cost, name="Get CBS cost", args=(map, starts, goals_hungarian, real_cost))
         p.start()
         counter = 0
         while (counter < TESTER_TIMEOUT):
@@ -106,10 +106,10 @@ def get_goals_assignment(map, starts, goal_positions, args):
             if (not p.is_alive()):
                 break
         if (p.is_alive()):
-            print("Exhaustive search CBS cost: not found")
+            print("Hungarian algorithm CBS cost: not found")
             p.terminate()
         else:
-            print("Exhaustive search CBS cost: " + str(real_cost.value))
+            print("Hungarian algorithm CBS cost: " + str(real_cost.value))
         p.join()
         
 

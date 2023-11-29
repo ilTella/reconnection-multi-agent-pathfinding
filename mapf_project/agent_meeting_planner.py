@@ -6,8 +6,8 @@ import sys
 from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
-from libraries.goals_choice import search_goal_positions_minimize_mean_distance, search_goal_positions_complete, print_goal_positions, search_goal_positions_improved_complete, search_goal_positions_generate_clique
-from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_exhaustive_search, search_goals_assignment_hungarian
+from libraries.goals_choice import print_goal_positions, search_goal_positions_uninformed_generate_clique, search_goal_positions_informed_generate_clique
+from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_hungarian
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance
 from libraries.visualize import Enhanced_Animation
@@ -23,17 +23,11 @@ SOLVER_TIMEOUT = 60
 def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], args: list) -> list[tuple[int, int]]:
     goal_positions = []
 
-    if args.goals_choice == GoalsChoice.COMPLETE.name:
-        goal_positions = search_goal_positions_complete(map, starts, connectivity_graph)
+    if args.goals_choice == GoalsChoice.UNINFORMED_GENERATION.name:
+        goal_positions = search_goal_positions_uninformed_generate_clique(map, starts, connectivity_graph)
 
-    elif args.goals_choice == GoalsChoice.IMPROVED_COMPLETE.name:
-        goal_positions = search_goal_positions_improved_complete(map, starts, connectivity_graph)
-
-    elif args.goals_choice == GoalsChoice.MINIMIZE_MEAN_DISTANCE.name:
-        goal_positions = search_goal_positions_minimize_mean_distance(map, starts, connectivity_graph)
-
-    elif args.goals_choice == GoalsChoice.GENERATE_CLIQUE.name:
-        goal_positions = search_goal_positions_generate_clique(map, starts, connectivity_graph)
+    elif args.goals_choice == GoalsChoice.INFORMED_GENERATION.name:
+        goal_positions = search_goal_positions_informed_generate_clique(map, starts, connectivity_graph)
 
     else:
         raise(RuntimeError("Unknown goals choice algorithm."))
@@ -46,10 +40,7 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
 def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]], args: list) -> list[tuple[int, int]]:
     new_goals = []
 
-    if args.goals_assignment == GoalsAssignment.EXHAUSTIVE_SEARCH.name:
-        new_goals, _ = search_goals_assignment_exhaustive_search(map, starts, goal_positions)
-
-    elif args.goals_assignment == GoalsAssignment.HUNGARIAN_ALGORITHM.name:
+    if args.goals_assignment == GoalsAssignment.HUNGARIAN.name:
         new_goals, _ = search_goals_assignment_hungarian(map, starts, goal_positions)
 
     elif args.goals_assignment == GoalsAssignment.LOCAL_SEARCH.name:
@@ -120,10 +111,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Solve a MAPF agent meeting problem')
     parser.add_argument('--instance', type=str, default=None, required=True,
                         help='The name of the instance file(s)')
-    parser.add_argument('--goals_choice', type=str, default=GoalsChoice.IMPROVED_COMPLETE.name, choices=[GoalsChoice.COMPLETE.name, GoalsChoice.IMPROVED_COMPLETE.name, GoalsChoice.MINIMIZE_MEAN_DISTANCE.name, GoalsChoice.GENERATE_CLIQUE.name],
-                        help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.IMPROVED_COMPLETE.name)
-    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.LOCAL_SEARCH.name, choices=[GoalsAssignment.EXHAUSTIVE_SEARCH.name, GoalsAssignment.HUNGARIAN_ALGORITHM.name, GoalsAssignment.LOCAL_SEARCH.name],
-                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.LOCAL_SEARCH.name)
+    parser.add_argument('--goals_choice', type=str, default=GoalsChoice.INFORMED_GENERATION.name, choices=[GoalsChoice.UNINFORMED_GENERATION.name, GoalsChoice.INFORMED_GENERATION.name],
+                        help='The algorithm to use to select the goal nodes, defaults to ' + GoalsChoice.INFORMED_GENERATION.name)
+    parser.add_argument('--goals_assignment', type=str, default=GoalsAssignment.HUNGARIAN.name, choices=[GoalsAssignment.HUNGARIAN.name, GoalsAssignment.LOCAL_SEARCH.name],
+                        help='The algorithm to use to assign each goal to an agent, defaults to ' + GoalsAssignment.HUNGARIAN.name)
     parser.add_argument('--connectivity_graph', type=bool, default=False,
                         help='Decide if you want to generate a connectivity graph for the instance or use one already generated, defaults to ' + str(False))
     parser.add_argument('--connection_criterion', type=str, default=ConnectionCriterion.PATH_LENGTH.name, choices=[ConnectionCriterion.NONE.name, ConnectionCriterion.DISTANCE.name, ConnectionCriterion.PATH_LENGTH.name],
