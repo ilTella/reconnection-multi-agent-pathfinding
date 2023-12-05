@@ -36,14 +36,6 @@ def find_all_cliques(connectivity_graph: dict[tuple[int, int], list[tuple[int, i
 
     return cliques
 
-def find_a_clique(connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], keys_list: list[tuple[int, int]], num_of_agents: int) -> list[list[tuple[int, int]]]:
-    for k in keys_list:
-        for comb in combinations(connectivity_graph[k], num_of_agents - 1):
-            candidate = list(comb)
-            candidate.append(k)
-            if are_nodes_a_clique(candidate, connectivity_graph):
-                return candidate
-
 def are_nodes_connected(map: list[list[bool]], start_x: int, start_y: int, dest_x: int, dest_y: int, args: list) -> bool:
     connected = False
 

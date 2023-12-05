@@ -6,7 +6,7 @@ import sys
 from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
-from libraries.goals_choice import print_goal_positions, search_goal_positions_uninformed_generate_clique, search_goal_positions_informed_generate_clique
+from libraries.goals_choice import print_goal_positions, generate_goal_positions
 from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_hungarian
 from libraries.run_experiments import import_mapf_instance
 from libraries.utils import print_mapf_instance
@@ -20,14 +20,14 @@ from libraries.visualize import Enhanced_Animation
 
 SOLVER_TIMEOUT = 60
 
-def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], args: list) -> list[tuple[int, int]]:
+def get_goal_positions(starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], args: list) -> list[tuple[int, int]]:
     goal_positions = []
 
     if args.goals_choice == GoalsChoice.UNINFORMED_GENERATION.name:
-        goal_positions = search_goal_positions_uninformed_generate_clique(map, starts, connectivity_graph)
+        goal_positions = generate_goal_positions(starts, connectivity_graph, informed=False)
 
     elif args.goals_choice == GoalsChoice.INFORMED_GENERATION.name:
-        goal_positions = search_goal_positions_informed_generate_clique(map, starts, connectivity_graph)
+        goal_positions = generate_goal_positions(starts, connectivity_graph, informed=True)
 
     else:
         raise(RuntimeError("Unknown goals choice algorithm."))
@@ -73,17 +73,17 @@ def solve_instance(file: str, args: list) -> None:
     if (args.connectivity_graph):
         print("*** Generate connectivity graph ***\n")
         connectivity_graph = generate_connectivity_graph(map, args)
+        print_connectivity_graph(connectivity_graph)
     else:
         print("*** Import connectivity graph from file ***\n")
         cg_path = "./connectivity_graphs/" + file_id + ".txt"
         connectivity_graph = import_connectivity_graph(cg_path)
-    print_connectivity_graph(connectivity_graph)
     CPU_time = time.time() - start_time
     print("CPU time (s):    {:.2f}".format(CPU_time))
     print()
 
     print("*** Find new goal positions ***\n")
-    goal_positions = get_goal_positions(map, starts, connectivity_graph, args)
+    goal_positions = get_goal_positions(starts, connectivity_graph, args)
     print_goal_positions(goal_positions)
     CPU_time = time.time() - start_time
     print("CPU time (s):    {:.2f}".format(CPU_time))
