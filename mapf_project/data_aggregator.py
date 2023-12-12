@@ -189,16 +189,16 @@ def generate_charts() -> None:
     plt.show()
 
     # Hungarian algorithm execution times
-    D = []
+    x = []
     f = open("./data/hungarian_times", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        D.append(float(line))
+        x.append(float(line))
     fig, ax = plt.subplots()
-    ax.boxplot(D)
+    ax.hist(x, bins=6)
     ax.set_title("Hungarian algorithm execution times")
-    ax.set_ylabel("seconds")
+    ax.set_xlabel("seconds")
 
     plt.show()
 

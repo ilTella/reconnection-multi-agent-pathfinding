@@ -85,7 +85,8 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         </td>
         <td>
             <ul>
-                <li><b>Greedy</b>: si cerca una cricca di n nodi con un approccio greedy. L'algoritmo non solo è subottimale ma è anche incompleto</li>
+                <li><b>Generazione non informata</b>: viene generata una cricca di nodi connessi tra loro, senza utilizzare euristiche</li>
+                <li><b>Generazione informata</b>: viene generata una cricca di nodi connessi tra loro, utilizzando come euristica la distanza euclidea tra i nodi per scegliere la cricca migliore, ossia quella costituita da i nodi con distanza media minima rispetto alle posizioni di partenza degli agenti</li>
             </ul>
         </td>
     </tr>
@@ -95,12 +96,8 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
         </td>
         <td>
             <ul>
-                <li><b>Arbitraria</b>: la lista di nodi di goal individuati viene accettata nell'ordine in cui è</li>
-                <li><b>Random</b>: l'ordine dei nodi di goal viene randomizzato</li>
-                <li><b>Greedy</b>: viene utilizzato un algoritmo greedy per assegnare ogni nodo di goal all'agente più vicino ad esso</li>
-                <li><b>Ricerca esaustiva con A*</b>: si utilizza A* per calcolare il costo del percorso tra ogni agente e ogni nodo di goal, poi si esamina ogni permutazione possibile dell'assegnamento dei nodi e si restituisce quello con costo totale minimo</li>
-                <li><b>Minimizza distanza con A*</b>: si utilizza A* per calcolare il costo del percorso tra ogni agente e ogni nodo di goal, poi si cerca la permutazione dell'assegnamento dei nodi di goal con costo minimo scambiando di volta in volta due agenti, proseguendo finchè non ci sono più direzioni di miglioramento</li>
-                <li><b>Minimizza distanza con CBS</b>: si cerca la permutazione dell'assegnamento dei nodi di goal con costo minimo scambiando di volta in volta due agenti, proseguendo finchè non ci sono più direzioni di miglioramento. Per calcolare il costo dell'assegnamento si risolve usando CBS</li>
+                <li><b>Algoritmo ungherese</b>: viene generato esattamente l'assegnamento col costo minimo</li>
+                <li><b>Local search</b>: viene generato un assegnamento casuale, poi esso viene migliorato fino a raggiungere il minimo locale. Questo processo viene effettuato diverse volte e viene scelto l'assegnamento col costo migliore</li>
             </ul>
         </td>
     </tr>
@@ -108,7 +105,7 @@ Infine, avendo una mappa, delle posizioni di partenza e di goal, posso passare l
 
 #### Statistiche
 
-La generazione del grafo di connettività è un processo arbitrario, che potrebbe essere svolto prima di risolvere l'istanza.
-Per istanze piccole il criterio di connessione PATH_LENGTH produce velocemente un risultato, mentre per istanze più grandi conviene usare DISTANCE.
+La generazione del grafo di connettività è un processo arbitrario, che può essere svolto prima di risolvere l'istanza, risparmiando così tempo.
+Per istanze piccole il criterio di connessione PATH_LENGTH produce velocemente un risultato, mentre per istanze più grandi conviene usare DISTANCE, meno accurato ma molto più veloce.
 
 Trovare ogni volta la cricca ottima e l'assegnamento ottimo è troppo dispendioso, ci si accontenta di una soluzione subottimale e grazie ai dati raccolti si verifica che questa non si discosti troppo dall'ottimo, col vantaggio di richiedere uno sforzo computazionale decisamente inferiore.
