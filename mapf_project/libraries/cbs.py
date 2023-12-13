@@ -155,7 +155,7 @@ def disjoint_splitting(collision):
 class CBSSolver(object):
     """The high-level search of CBS."""
 
-    def __init__(self, my_map, starts, goals, doPrint=True):
+    def __init__(self, my_map, starts, goals):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
@@ -164,7 +164,6 @@ class CBSSolver(object):
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
-        self.doPrint = doPrint
         
         self.num_of_agents = len(goals)
 
@@ -181,14 +180,12 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        if self.doPrint:
-            print("Generate node {}".format(self.num_of_generated))
+        print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        if self.doPrint:
-            print("Expand node {}".format(id))
+        print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -217,8 +214,7 @@ class CBSSolver(object):
                         if current_loc == loc[0] and next_loc == loc[1]:
                             ids.append(i)
                 i +=1
-        if self.doPrint:
-            print(ids)
+        print(ids)
         return ids
 
 
@@ -254,8 +250,7 @@ class CBSSolver(object):
         while self.open_list:
             p = self.pop_node()
             if len(p['collisions']) == 0:
-                if self.doPrint:
-                    self.print_results(root)
+                self.print_results(root)
                 return p['paths']
             collision = p['collisions'][0]
             # choosing splitting method depending on disjoint
@@ -281,9 +276,8 @@ class CBSSolver(object):
                                 new_constraints.append(
                                     {'agent': a, 'loc': loc, 'timestep': collision['timestep'],
                                      'positive': False})
-                        if self.doPrint: 
-                            print("new const")
-                            print(new_constraints)
+                        print("new const")
+                        print(new_constraints)
                     # for c in new_constraints:
                     #     p['constraints'].append(c)
                     # if violate > 0:
@@ -307,14 +301,12 @@ class CBSSolver(object):
                         const_for_q.append(constraint)
                 # if disjoint is on we have new constraints
                 if disjoint:
-                    if self.doPrint:
-                        print("adding new")
+                    print("adding new")
                     if new_constraints:
                         for c in new_constraints:
                             if constraint not in const_for_q:
                                 const_for_q.append(c)
-                    if self.doPrint:
-                        print(const_for_q)
+                    print(const_for_q)
                 q['constraints'] = const_for_q
                 q['paths'] = p['paths']
                 if disjoint:
@@ -347,17 +339,14 @@ class CBSSolver(object):
                 else:
                     self.push_node(q)
         # raise BaseException('No solutions')
-        if self.doPrint:
-            print("open list is empty")
+        print("open list is empty")
 
         # Task 3.1: Testing
-        if self.doPrint:
-            print(root['collisions'])
+        print(root['collisions'])
 
         # Task 3.2: Testing
         for collision in root['collisions']:
-            if self.doPrint:
-                print(standard_splitting(collision))
+            print(standard_splitting(collision))
 
         ##############################
         # Task 3.3: High-Level Search
@@ -368,8 +357,7 @@ class CBSSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         # print(get_sum_of_cost(root['paths']))
-        if self.doPrint:
-            self.print_results(root)
+        self.print_results(root)
         return root['paths']
 
 

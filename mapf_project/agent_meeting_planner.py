@@ -8,8 +8,7 @@ from libraries.connectivity_graphs import generate_connectivity_graph, import_co
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
 from libraries.goals_choice import print_goal_positions, generate_goal_positions
 from libraries.goals_assignment import print_goals_assignment, search_goals_assignment_local_search, search_goals_assignment_hungarian
-from libraries.run_experiments import import_mapf_instance
-from libraries.utils import print_mapf_instance
+from libraries.utils import print_mapf_instance, import_mapf_instance
 from libraries.visualize import Enhanced_Animation
 
 '''

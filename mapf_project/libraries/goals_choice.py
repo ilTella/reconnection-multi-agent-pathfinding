@@ -1,5 +1,5 @@
 from .utils import get_euclidean_distance
-from .connectivity_graphs import get_reduced_connectivity_graph, are_nodes_a_clique
+from .connectivity_graphs import get_reduced_connectivity_graph
 
 def generate_goal_positions(starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], informed: bool) -> list[tuple[int, int]]:
     goal_positions = []

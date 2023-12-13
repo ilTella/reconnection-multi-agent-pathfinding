@@ -4,8 +4,7 @@ import multiprocessing
 import time
 import sys
 from libraries.enums import ConnectionCriterion
-from libraries.run_experiments import import_mapf_instance
-from libraries.utils import print_mapf_instance, get_cbs_cost
+from libraries.utils import print_mapf_instance, get_cbs_cost, import_mapf_instance
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, find_all_cliques, are_nodes_a_clique
 from libraries.goals_choice import print_goal_positions, generate_goal_positions
 from libraries.goals_assignment import search_goals_assignment_hungarian, print_goals_assignment, get_random_goal_assignment

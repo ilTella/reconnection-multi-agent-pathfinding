@@ -4,7 +4,7 @@ import multiprocessing
 import time
 import sys
 from libraries.enums import ConnectionCriterion
-from libraries.run_experiments import import_mapf_instance
+from libraries.utils import import_mapf_instance
 from libraries.connectivity_graphs import generate_connectivity_graph, save_connectivity_graph
 
 def manage_instance(file: str, args: list) -> None:
