@@ -250,7 +250,7 @@ class CBSSolver(object):
         while self.open_list:
             p = self.pop_node()
             if len(p['collisions']) == 0:
-                self.print_results(root)
+                self.print_results(p)
                 return p['paths']
             collision = p['collisions'][0]
             # choosing splitting method depending on disjoint
@@ -365,7 +365,7 @@ class CBSSolver(object):
         print("\n Found a solution! \n")
         CPU_time = timer.time() - self.start_time
         print("CPU time (s):    {:.2f}".format(CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'], self.goals,self.starts)))
+        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'], self.goals, self.starts)))
         print(node['paths'])
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))

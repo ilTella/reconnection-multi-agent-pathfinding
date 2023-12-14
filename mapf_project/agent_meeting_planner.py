@@ -102,6 +102,7 @@ def solve_instance(file: str, args: list) -> None:
         print("***Run CBS***")
         cbs = CBSSolver(map, starts, new_goals)
         paths = cbs.find_solution(False)
+        print()
         
         animation = Enhanced_Animation(map, starts, new_goals, connectivity_graph, paths)
         animation.show()

@@ -196,7 +196,7 @@ def generate_charts() -> None:
         if line == "": break
         x.append(float(line))
     fig, ax = plt.subplots()
-    ax.hist(x, bins=6)
+    ax.hist(x, bins=8)
     ax.set_title("Hungarian algorithm execution times")
     ax.set_xlabel("seconds")
 

@@ -3,6 +3,7 @@ from .single_agent_planner import a_star, get_sum_of_cost
 from .cbs import CBSSolver
 from typing import Optional
 from pathlib import Path
+import sys
 
 def get_euclidean_distance(x1: int, y1: int, x2: int, y2: int) -> float:
     return round((math.sqrt((x2 - x1)**2 + (y2 - y1)**2)), 2)
@@ -35,9 +36,11 @@ def print_locations(my_map, locations):
     print(to_print)
 
 def get_cbs_cost(map: list[list[bool]], starts: list[tuple[int, int]], goals: list[tuple[int, int]], shared_var):
-    cbs = CBSSolver(map, starts, goals, doPrint=False)
+    sys.stdout = None
+    cbs = CBSSolver(map, starts, goals)
     paths = cbs.find_solution(disjoint=False)
     cost = get_sum_of_cost(paths, goals, starts)
+    sys.stdout = sys.__stdout__
     shared_var.value = cost
 
 def import_mapf_instance(filename):
