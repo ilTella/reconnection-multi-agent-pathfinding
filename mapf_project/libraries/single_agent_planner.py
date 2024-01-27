@@ -5,30 +5,66 @@ def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
-def get_sum_of_cost(paths, goals, starts):
+''' original code for the objective function
+
+def get_sum_of_cost(paths, goals,starts):
+    rst = 0
+    i = 0
+    for path in paths:
+        print(path)
+        t = 1
+        first_goal_index = 0
+        j = 0
+        for p in path:
+            if p == goals[i]:
+                first_goal_index = j
+                break
+            j +=1
+
+        for loc in path:
+            # print(loc)
+            # print(goals[i])
+            if loc != goals[i] and t <= first_goal_index:
+                rst +=1
+            t +=1
+        i +=1
+        # rst += len(path) - 1
+    return rst
+    # rst = 0
+    # for path in paths:
+    #     rst += len(path) - 1
+    # print(rst)
+    # return rst
+'''
+
+def get_sum_of_cost(paths, goals, starts, useVariant=False):
     cost = 0
     goal_index = 0
 
     for path in paths:
-        print(str(goal_index) + ": ", end="")
-        last_node = None
-        for node in path:
-            if last_node == None:
-                last_node = node
-                print(str(node) + "s, ", end="")
-                continue
-            if node == goals[goal_index] and last_node == goals[goal_index]:
-                print(str(node) + "w, ", end="")
-                continue
-            else:
-                last_node = node
-                print(str(node) + ", ", end="")
-                cost += 1
-        print()
-        goal_index += 1
+        if (useVariant):
+            print(str(goal_index) + ": ", end="")
+            last_node = None
+            for node in path:
+                if last_node == None:
+                    last_node = node
+                    print(str(node) + "s, ", end="")
+                    continue
+                if node == goals[goal_index] and last_node == goals[goal_index]:
+                    print(str(node) + "w, ", end="")
+                    continue
+                else:
+                    last_node = node
+                    print(str(node) + ", ", end="")
+                    cost += 1
+            print()
+            goal_index += 1
+        else:
+            print(path)
+            cost += len(path) - 1
 
     return cost
-    
+
 
 def compute_heuristics(my_map, goal):
     # Use Dijkstra to build a shortest-path tree rooted at the goal location

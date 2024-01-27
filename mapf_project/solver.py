@@ -3,6 +3,7 @@ import glob
 import multiprocessing
 import time
 import sys
+import os
 from libraries.cbs import CBSSolver
 from libraries.connectivity_graphs import generate_connectivity_graph, import_connectivity_graph, print_connectivity_graph
 from libraries.enums import ConnectionCriterion, GoalsChoice, GoalsAssignment
@@ -56,6 +57,7 @@ def solve_instance(file: str, args: list) -> None:
     path = "./outputs/" + file_id + ".txt"
     if (args.save_output):
         print("Solving " + file)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         f = open(path, 'w')
         sys.stdout = f
         sys.stderr = f
@@ -127,6 +129,8 @@ if __name__ == '__main__':
                         help='Decide to save the output in txt files, defaults to ' + str(False))
     parser.add_argument('--timeout', type=bool, default=False,
                         help='Decide to terminate the solver if it cannot finish in less than a minute, defaults to ' + str(False))
+    parser.add_argument('--verbose', type=bool, default=False,
+                        help='Decide to print additional data regarding the problem instance and its solution, defaults to ' + str(False))
 
     args = parser.parse_args()
 
