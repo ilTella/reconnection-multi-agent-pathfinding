@@ -102,17 +102,6 @@ def get_random_goal_assignment(map: list[list[bool]], starts: list[tuple[int, in
     matrix = get_path_length_matrix(map, starts, goal_positions)
     cost = get_assignment_cost_astar(matrix, assignment)
 
-    '''
-    print("goal positions: " + str(goal_positions))
-    print("random assignment: " + str(assignment))
-    print("goals: " + str(new_goals))
-    for i in range(len(matrix)):
-        print("S" + str(i) + "\t", end="")
-        for j in range(len(matrix)):
-            print(str(matrix[i][j]) + "\t", end="")
-        print()
-    '''
-
     return new_goals, cost
 
 def get_path_length_matrix(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[list[int]]:

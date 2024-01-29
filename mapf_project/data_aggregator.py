@@ -17,8 +17,8 @@ def aggregate_data() -> None:
     random_heuristic_values = []
     random_cbs_values = []
 
-    for filename in os.listdir("./testing/"):
-        path = "./testing/" + filename
+    for filename in os.listdir("./outputs/"):
+        path = "./outputs/" + filename
         with open(path, 'r') as f:
             while True:
                 line = f.readline()
@@ -196,7 +196,7 @@ def generate_charts() -> None:
         if line == "": break
         x.append(float(line))
     fig, ax = plt.subplots()
-    ax.hist(x, bins=8)
+    ax.hist(x, bins=6)
     ax.set_title("Hungarian algorithm execution times")
     ax.set_xlabel("seconds")
 

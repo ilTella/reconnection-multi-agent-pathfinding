@@ -5,7 +5,7 @@ def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
-''' original code for the objective function
+''' original code of get_sum_of_cost
 
 def get_sum_of_cost(paths, goals,starts):
     rst = 0

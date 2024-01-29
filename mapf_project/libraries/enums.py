@@ -7,6 +7,7 @@ class GoalsChoice(Enum):
 class GoalsAssignment(Enum):
     HUNGARIAN = 1
     LOCAL_SEARCH = 2
+    RANDOM = 3
 
 class ConnectionCriterion(Enum):
     NONE = 1
