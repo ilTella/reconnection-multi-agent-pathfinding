@@ -43,6 +43,8 @@ def get_sum_of_cost(paths, goals, starts, useVariant=False):
 
     for path in paths:
         if (useVariant):
+            # each action (move or wait) has cost = 1
+            # waiting on the goal is free 
             print(str(goal_index) + ": ", end="")
             last_node = None
             for node in path:
@@ -58,10 +60,24 @@ def get_sum_of_cost(paths, goals, starts, useVariant=False):
                     print(str(node) + ", ", end="")
                     cost += 1
             print()
-            goal_index += 1
         else:
+            # each action (move or wait) has cost = 1
+            # waiting on the goal is free iff the agent will not move anymore
             print(path)
-            cost += len(path) - 1
+            length_to_pay = 0
+            goal_reached = False
+            i = 0
+            for node in path:
+                i += 1
+                if node == goals[goal_index]:
+                    if goal_reached == False:
+                        length_to_pay = i
+                    goal_reached = True
+                else:
+                    goal_reached = False
+                    length_to_pay = i
+            cost += length_to_pay - 1
+        goal_index += 1
 
     return cost
 

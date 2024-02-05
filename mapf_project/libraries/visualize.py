@@ -180,7 +180,7 @@ class Enhanced_Animation:
             self.patches.append(Rectangle((goal[0] - 0.25, goal[1] - 0.25), 0.5, 0.5, facecolor=Colors[i % len(Colors)],
                                           edgecolor='black', alpha=0.5))
             
-        # draw connected goals
+        # draw connected goals (this part of code was added)
         line_colors = ["ro-", "go-", "bo-", "yo-"]
 
         for goal1 in goals:
@@ -193,6 +193,7 @@ class Enhanced_Animation:
                     y.append(len(self.my_map[0]) - 1 - goal1[0])
                     y.append(len(self.my_map[0]) - 1 - goal2[0])
                     plt.plot(x, y, random.choice(line_colors))
+        ###
 
         for i in range(len(self.paths)):
             name = str(i)

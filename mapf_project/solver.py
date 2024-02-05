@@ -48,13 +48,13 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
     cliques_cbs_costs = []
     real_cost = multiprocessing.Value('i', 0)
     i = 0
-    print("clique | cost")
+    print("clique : lower bound (A*), real cost (CBS)")
     for clique in cliques:
         i += 1
         goal_positions_temp = []
         for n in clique:
             goal_positions_temp.append((n[1], n[0]))
-        goal_assignment_temp, _ = search_goals_assignment_hungarian(map, starts, goal_positions_temp)
+        goal_assignment_temp, clique_heuristic_cost = search_goals_assignment_hungarian(map, starts, goal_positions_temp)
         
         p = multiprocessing.Process(target=get_cbs_cost, name="Get CBS cost", args=(map, starts, goal_assignment_temp, real_cost))
         p.start()
@@ -65,15 +65,16 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
             if (not p.is_alive()):
                 break
         if (p.is_alive()):
-            _, real_cost.value = search_goals_assignment_hungarian(map, starts, goal_positions_temp)
-            # if CBS fails to found paths within the time given to it, an estimated cost is given
-            # (the sum of single-agent plans costs found with A*, without considering conflicts) 
-            print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value) + " (estimated)")
+            # if CBS fails to found paths within the time limit, a lower bound is considered
+            # (sum of costs of single-agent plans found with A*, without considering conflicts, using optimal assignment found with Hungarian algorithm) 
+            print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(clique_heuristic_cost))
+            cliques_cbs_costs.append((clique, clique_heuristic_cost))
             p.terminate()
         else:
-            print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(real_cost.value))
-        cliques_cbs_costs.append((clique, real_cost.value))
+            print("clique " + str(i) + "/" + str(len(cliques)) + " -> " + str(clique) + ": " + str(clique_heuristic_cost) + ", " + str(real_cost.value))
+            cliques_cbs_costs.append((clique, real_cost.value))
         p.join()
+        real_cost.value = 0
     print()
 
     cliques_cbs_costs.sort(key=lambda el: el[1])
@@ -108,6 +109,7 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
     goal_positions_informed_clique.sort()
     print("Informed generation clique: " + str(goal_positions_informed_clique))
     goal_positions_informed_cost = 0
+    print()
 
     # all cliques are ranked by cost, highlighting the best one and those found with informed and uninformed generation
     for el in cliques_cbs_costs:
@@ -155,7 +157,7 @@ def get_goals_assignment(map: list[list[bool]], starts: list[tuple[int, int]], g
     else:
         raise(RuntimeError("Unknown goals assignment algorithm."))
     search_time = time.time() - start_time
-    
+
     if (args.verbose == False):
         return goals
     
@@ -219,8 +221,6 @@ def solve_instance(file: str, args: list) -> None:
         sys.stdout = f
         sys.stderr = f
 
-    start_time = time.time()
-
     print("*** Import an instance ***\n")
     print("Instance: " + file + "\n")
     print("Goals choice: " + args.goals_choice)
@@ -236,34 +236,28 @@ def solve_instance(file: str, args: list) -> None:
         print("*** Import connectivity graph from file ***\n")
         cg_path = "./connectivity_graphs/" + file_id + ".txt"
         connectivity_graph = import_connectivity_graph(cg_path)
-    CPU_time = time.time() - start_time
-    print("CPU time (s):    {:.2f}".format(CPU_time))
     print()
 
     print("*** Find goal positions ***\n")
     goal_positions = get_goal_positions(map, starts, connectivity_graph, args)
     print_goal_positions(goal_positions)
-    CPU_time = time.time() - start_time
-    print("CPU time (s):    {:.2f}".format(CPU_time))
     print()
 
     print("*** Assign each agent to a goal ***\n")
-    new_goals = get_goals_assignment(map, starts, goal_positions, args)
-    print_goals_assignment(new_goals)
-    CPU_time = time.time() - start_time
-    print("CPU time (s):    {:.2f}".format(CPU_time))
+    goals = get_goals_assignment(map, starts, goal_positions, args)
+    print_goals_assignment(goals)
     print()
 
     print("*** Problem ready to be solved ***\n")
-    print_mapf_instance(map, starts, new_goals)
+    print_mapf_instance(map, starts, goals)
 
     if (args.solve):
         print("***Run CBS***")
-        cbs = CBSSolver(map, starts, new_goals)
+        cbs = CBSSolver(map, starts, goals)
         paths = cbs.find_solution(False)
         print()
         
-        animation = Enhanced_Animation(map, starts, new_goals, connectivity_graph, paths)
+        animation = Enhanced_Animation(map, starts, goals, connectivity_graph, paths)
         animation.show()
     
     sys.stdout = sys.__stdout__

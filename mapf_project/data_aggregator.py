@@ -19,6 +19,7 @@ def aggregate_data() -> None:
 
     for filename in os.listdir("./outputs/"):
         path = "./outputs/" + filename
+        specs = filename.split("_test_")[0]
         with open(path, 'r') as f:
             while True:
                 line = f.readline()
@@ -26,87 +27,87 @@ def aggregate_data() -> None:
                     break
                 if "Cliques found" in line:
                     elements = line.split(": ")
-                    number_of_cliques.append(int(elements[1].strip()))
+                    number_of_cliques.append(specs + ":" + elements[1].strip())
                 if "Uninformed clique generation optimality" in line:
                     elements = line.split(": ")
-                    uninformed_optimality_values.append(float(elements[1].strip()))
+                    uninformed_optimality_values.append(specs + ":" + elements[1].strip())
                 if "Informed clique generation optimality" in line:
                     elements = line.split(": ")
-                    informed_optimality_values.append(float(elements[1].strip()))
+                    informed_optimality_values.append(specs + ":" + elements[1].strip())
                 if "Goals positions (uninformed clique generation) search time" in line:
                     elements = line.split(": ")
-                    uninformed_times.append(float(elements[1].strip()))
+                    uninformed_times.append(specs + ":" + elements[1].strip())
                 if "Goals positions (informed clique generation) search time" in line:
                     elements = line.split(": ")
-                    informed_times.append(float(elements[1].strip()))
+                    informed_times.append(specs + ":" + elements[1].strip())
                 if "Hungarian algorithm heuristic cost" in line:
                     elements = line.split(": ")
-                    hungarian_heuristic_values.append(int(elements[1].strip()))
+                    hungarian_heuristic_values.append(specs + ":" + elements[1].strip())
                 if "Hungarian algorithm time" in line:
                     elements = line.split(": ")
-                    hungarian_times.append(float(elements[1].strip()))
+                    hungarian_times.append(specs + ":" + elements[1].strip())
                 if "Hungarian algorithm CBS cost" in line:
                     elements = line.split(": ")
                     if elements[1].strip() == "not found":
-                        hungarian_cbs_values.append(-1)
+                        hungarian_cbs_values.append(specs + ":" + str(-1))
                     else:
-                        hungarian_cbs_values.append(int(elements[1].strip()))
+                        hungarian_cbs_values.append(specs + ":" + elements[1].strip())
                 if "Random assignment heuristic cost" in line:
                     elements = line.split(": ")
-                    random_heuristic_values.append(int(elements[1].strip()))
+                    random_heuristic_values.append(specs + ":" + elements[1].strip())
                 if "Random assignment CBS cost" in line:
                     elements = line.split(": ")
                     if elements[1].strip() == "not found":
-                        random_cbs_values.append(-1)
+                        random_cbs_values.append(specs + ":" + str(-1))
                     else:
-                        random_cbs_values.append(int(elements[1].strip()))
+                        random_cbs_values.append(specs + ":" + elements[1].strip())
 
-    f = open("./data/number_of_cliques", "w")      
+    f = open("./data/number_of_cliques.txt", "w")      
     sys.stdout = f
     for value in number_of_cliques:
         print(value)
 
-    f = open("./data/uninformed_optimality_values", "w")      
+    f = open("./data/uninformed_optimality_values.txt", "w")      
     sys.stdout = f
     for value in uninformed_optimality_values:
         print(value)
 
-    f = open("./data/informed_optimality_values", "w")      
+    f = open("./data/informed_optimality_values.txt", "w")      
     sys.stdout = f
     for value in informed_optimality_values:
         print(value)
 
-    f = open("./data/uninformed_times", "w")      
+    f = open("./data/uninformed_times.txt", "w")      
     sys.stdout = f
     for value in uninformed_times:
         print(value)
 
-    f = open("./data/informed_times", "w")      
+    f = open("./data/informed_times.txt", "w")      
     sys.stdout = f
     for value in informed_times:
         print(value)
     
-    f = open("./data/hungarian_heuristic_values", "w")      
+    f = open("./data/hungarian_heuristic_values.txt", "w")      
     sys.stdout = f
     for value in hungarian_heuristic_values:
         print(value)
     
-    f = open("./data/hungarian_cbs_values", "w")      
+    f = open("./data/hungarian_cbs_values.txt", "w")      
     sys.stdout = f
     for value in hungarian_cbs_values:
         print(value)
     
-    f = open("./data/hungarian_times", "w")      
+    f = open("./data/hungarian_times.txt", "w")      
     sys.stdout = f
     for value in hungarian_times:
         print(value)
     
-    f = open("./data/random_heuristic_values", "w")      
+    f = open("./data/random_heuristic_values.txt", "w")      
     sys.stdout = f
     for value in random_heuristic_values:
         print(value)
     
-    f = open("./data/random_cbs_values", "w")      
+    f = open("./data/random_cbs_values.txt", "w")      
     sys.stdout = f
     for value in random_cbs_values:
         print(value)
@@ -116,130 +117,125 @@ def aggregate_data() -> None:
 def generate_charts() -> None:
     # uninformed/informed goals generation times
     D = [[],[]]
-    f = open("./data/uninformed_times", "r")      
+    f = open("./data/uninformed_times.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        D[0].append(float(line))
-    f = open("./data/informed_times", "r")      
+        D[0].append(float(line.split(":")[1]))
+    f = open("./data/informed_times.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        D[1].append(float(line))
+        D[1].append(float(line.split(":")[1]))
     fig, ax = plt.subplots()
     ax.boxplot(D, labels=["Uninformed", "Informed"], showfliers=False)
-    ax.set_title("Goals generation times")
+    ax.set_title("Goals generation execution time")
     ax.set_ylabel("seconds")
-
     plt.show()
 
     # uninformed/informed optimality
     D = [[],[]]
-    f = open("./data/uninformed_optimality_values", "r")      
+    f = open("./data/uninformed_optimality_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        D[0].append(float(line))
-    f = open("./data/informed_optimality_values", "r")      
+        D[0].append(float(line.split(":")[1]))
+    f = open("./data/informed_optimality_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        D[1].append(float(line))
+        D[1].append(float(line.split(":")[1]))
     fig, ax = plt.subplots()
-    ax.boxplot(D, labels=["Uninformed", "Informed"])
+    ax.boxplot(D, labels=["Uninformed", "Informed"], showmeans=True)
     ax.set_title("Optimality")
-
     plt.show()
 
     # uninformed/informed optimality related to number of cliques
     x = []
     y = []
-    f = open("./data/uninformed_optimality_values", "r")      
+    f = open("./data/uninformed_optimality_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        x.append(float(line))
-    f = open("./data/number_of_cliques", "r")      
+        x.append(float(line.split(":")[1]))
+    f = open("./data/number_of_cliques.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        y.append(int(line))
+        y.append(int(line.split(":")[1]))
 
     fig, ax = plt.subplots()
     ax.scatter(x, y)
     ax.set_title("Optimality related to number of cliques")
     ax.set_xlabel("Uninformed generation goals optimality")
     ax.set_ylabel("Number of cliques")
-
     plt.show()
 
     x = []
-    f = open("./data/informed_optimality_values", "r")      
+    f = open("./data/informed_optimality_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        x.append(float(line))
+        x.append(float(line.split(":")[1]))
 
     fig, ax = plt.subplots()
     ax.scatter(x, y)
-    ax.set_title("Optimality values related to number of cliques")
+    ax.set_title("Optimality related to number of cliques")
     ax.set_xlabel("Informed generation goals optimality")
     ax.set_ylabel("Number of cliques")
-
     plt.show()
 
     # Hungarian algorithm execution times
     x = []
-    f = open("./data/hungarian_times", "r")      
+    f = open("./data/hungarian_times.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        x.append(float(line))
+        x.append(float(line.split(":")[1]))
     fig, ax = plt.subplots()
     ax.hist(x, bins=6)
-    ax.set_title("Hungarian algorithm execution times")
+    ax.set_title("Hungarian algorithm execution time")
     ax.set_xlabel("seconds")
-
     plt.show()
 
-    # Hungarian/random goals assignment heuristic/CBS costs
+    # Hungarian/random goals assignment heuristic (A*) costs
     hungarian_heuristic_costs = []
     random_heuristic_costs = []
-    f = open("./data/hungarian_heuristic_values", "r")      
+    f = open("./data/hungarian_heuristic_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        hungarian_heuristic_costs.append(int(line))
-    f = open("./data/random_heuristic_values", "r")      
+        hungarian_heuristic_costs.append(int(line.split(":")[1]))
+    f = open("./data/random_heuristic_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        random_heuristic_costs.append(int(line))
+        random_heuristic_costs.append(int(line.split(":")[1]))
     percentages = []
     for i in range(len(hungarian_heuristic_costs)):
         diff = ((random_heuristic_costs[i] - hungarian_heuristic_costs[i]) / random_heuristic_costs[i]) * 100
         percentages.append(diff)
 
     fig, ax = plt.subplots()
-    ax.boxplot(percentages)
-    ax.set_title("How much assignments found with hungarian algorithm\nare better than random assignments\nin percentage\n(heuristic cost)")
-
+    ax.boxplot(percentages, labels=[""])
+    ax.set_title("Difference in heuristic cost (A*)\nusing Hungarian algorithm vs. random assignment")
+    ax.set_ylabel("%")
     plt.show()
 
-    #
+    # Hungarian/random goals assignment real (CBS) costs
 
     hungarian_cbs_costs = []
     random_cbs_costs = []
-    f = open("./data/hungarian_cbs_values", "r")      
+    f = open("./data/hungarian_cbs_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        hungarian_cbs_costs.append(int(line))
-    f = open("./data/random_cbs_values", "r")      
+        hungarian_cbs_costs.append(int(line.split(":")[1]))
+    f = open("./data/random_cbs_values.txt", "r")      
     while True:
         line = f.readline()
         if line == "": break
-        random_cbs_costs.append(int(line))
+        random_cbs_costs.append(int(line.split(":")[1]))
     percentages = []
     for i in range(len(hungarian_cbs_costs)):
         if random_cbs_costs[i] == -1 or hungarian_cbs_costs[i] == -1:
@@ -248,9 +244,189 @@ def generate_charts() -> None:
         percentages.append(diff)
 
     fig, ax = plt.subplots()
-    ax.boxplot(percentages)
-    ax.set_title("How much assignments found with hungarian algorithm\n are better than random assignments\nin percentage\n(CBS cost)")
+    ax.boxplot(percentages, labels=[""])
+    ax.set_title("Difference in cost (CBS)\nusing Hungarian algorithm vs. random assignment")
+    ax.set_ylabel("%")
+    plt.show()
 
+    # optimality related to different sizes
+
+    D = [[],[],[],[]]
+    f = open("./data/uninformed_optimality_values.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "s8" in specs:
+            D[0].append(float(value))
+        if "s10" in specs:
+            D[1].append(float(value))
+        if "s12" in specs:
+            D[2].append(float(value))
+        if "s15" in specs:
+            D[3].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["8x8", "10x10", "12x12", "15x15"], showmeans=True)
+    ax.set_title("Optimality related to map size\n(uninformed generation)")
+    ax.set_xlabel("Map size")
+    plt.show()
+
+    D = [[],[],[],[]]
+    f = open("./data/informed_optimality_values.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "s8" in specs:
+            D[0].append(float(value))
+        if "s10" in specs:
+            D[1].append(float(value))
+        if "s12" in specs:
+            D[2].append(float(value))
+        if "s15" in specs:
+            D[3].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["8x8", "10x10", "12x12", "15x15"], showmeans=True)
+    ax.set_title("Optimality related to map size\n(informed generation)")
+    ax.set_xlabel("Map size")
+    plt.show()
+    
+    # execution time related to different sizes
+
+    D = [[],[],[],[]]
+    f = open("./data/uninformed_times.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "s8" in specs:
+            D[0].append(float(value))
+        if "s10" in specs:
+            D[1].append(float(value))
+        if "s12" in specs:
+            D[2].append(float(value))
+        if "s15" in specs:
+            D[3].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["8x8", "10x10", "12x12", "15x15"], showfliers=False)
+    ax.set_title("Execution time related to map size\n(uninformed generation)")
+    ax.set_ylabel("seconds")
+    ax.set_xlabel("Map size")
+    plt.show()
+
+    D = [[],[],[],[]]
+    f = open("./data/informed_times.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "s8" in specs:
+            D[0].append(float(value))
+        if "s10" in specs:
+            D[1].append(float(value))
+        if "s12" in specs:
+            D[2].append(float(value))
+        if "s15" in specs:
+            D[3].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["8x8", "10x10", "12x12", "15x15"], showfliers=False)
+    ax.set_title("Execution time related to map size\n(informed generation)")
+    ax.set_ylabel("seconds")
+    ax.set_xlabel("Map size")
+    plt.show()
+
+    # optimality related to different densities
+
+    D = [[],[],[]]
+    f = open("./data/uninformed_optimality_values.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "d10" in specs:
+            D[0].append(float(value))
+        if "d20" in specs:
+            D[1].append(float(value))
+        if "d30" in specs:
+            D[2].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["10%", "20%", "30%"], showmeans=True)
+    ax.set_title("Optimality related to obstacles density\n(uninformed generation)")
+    ax.set_xlabel("Obstacles density")
+    plt.show()
+
+    D = [[],[],[]]
+    f = open("./data/informed_optimality_values.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "d10" in specs:
+            D[0].append(float(value))
+        if "d20" in specs:
+            D[1].append(float(value))
+        if "d30" in specs:
+            D[2].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["10%", "20%", "30%"], showmeans=True)
+    ax.set_title("Optimality related to obstacles density\n(informed generation)")
+    ax.set_xlabel("Obstacles density")
+    plt.show()
+
+    # execution time related to different densities
+
+    D = [[],[],[]]
+    f = open("./data/uninformed_times.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "d10" in specs:
+            D[0].append(float(value))
+        if "d20" in specs:
+            D[1].append(float(value))
+        if "d30" in specs:
+            D[2].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["10%", "20%", "30%"], showfliers=False)
+    ax.set_title("Execution time related to obstacles density\n(uninformed generation)")
+    ax.set_ylabel("seconds")
+    ax.set_xlabel("Obstacles density")
+    plt.show()
+
+    D = [[],[],[]]
+    f = open("./data/informed_times.txt", "r")      
+    while True:
+        line = f.readline()
+        if line == "": break
+        splitted = line.split(":")
+        specs = splitted[0]
+        value = splitted[1]
+        if "d10" in specs:
+            D[0].append(float(value))
+        if "d20" in specs:
+            D[1].append(float(value))
+        if "d30" in specs:
+            D[2].append(float(value))
+    fig, ax = plt.subplots()
+    ax.boxplot(D, labels=["10%", "20%", "30%"], showfliers=False)
+    ax.set_title("Execution time related to obstacles density\n(informed generation)")
+    ax.set_ylabel("seconds")
+    ax.set_xlabel("Obstacles density")
     plt.show()
 
 aggregate_data()

@@ -38,7 +38,7 @@ def print_locations(my_map, locations):
 def get_cbs_cost(map: list[list[bool]], starts: list[tuple[int, int]], goals: list[tuple[int, int]], shared_var):
     sys.stdout = None
     cbs = CBSSolver(map, starts, goals)
-    paths = cbs.find_solution(disjoint=False)
+    paths = cbs.find_solution(False)
     cost = get_sum_of_cost(paths, goals, starts)
     sys.stdout = sys.__stdout__
     shared_var.value = cost
