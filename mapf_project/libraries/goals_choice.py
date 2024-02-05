@@ -2,11 +2,15 @@ from .utils import get_euclidean_distance
 from .connectivity_graphs import get_reduced_connectivity_graph
 
 def generate_goal_positions(starts: list[tuple[int, int]], connectivity_graph: dict[tuple[int, int], list[tuple[int, int]]], informed: bool) -> list[tuple[int, int]]:
+    # returns a set of nodes which are strongly connected in the connectivity graph (a clique)
     goal_positions = []
 
     connectivity_graph = get_reduced_connectivity_graph(connectivity_graph, len(starts))
 
     keys = list(connectivity_graph.keys())
+    # if doing an informed search:
+    # Euclidean distance is calculated for each (agent start position, connectivity graph node) couple
+    # these values are used as an heuristic to determine a potential goal clique mean distance to all agents starting locations
     if (informed):
         distance_matrix = get_distance_matrix(starts, keys)
 
@@ -26,6 +30,7 @@ def generate_goal_positions(starts: list[tuple[int, int]], connectivity_graph: d
     for k in keys:
         clique_lists[0].append([k])
 
+    # k levels of search are needed, with k = number of agents (searched clique dimension)
     level = 0
     while clique_lists[-1] == []:
         if level < 0:
@@ -34,13 +39,18 @@ def generate_goal_positions(starts: list[tuple[int, int]], connectivity_graph: d
             level -= 1
             continue
         
+        # a clique is popped from current search level list
         current_clique = clique_lists[level][0]
         clique_lists[level].remove(current_clique)
 
+        # gets all nodes which are connected to all nodes already part of the clique
         intersection = connectivity_graph[current_clique[0]].copy()
         for i in range(1, len(current_clique)):
             intersection = list(set(intersection) & set(connectivity_graph[current_clique[i]]))
 
+        # for each of the nodes found:
+        # if node is not already in the clique, a new clique with it added in it is created
+        # all new cliques are appended in the search list of current level + 1
         nodes_to_add = intersection.copy()
         new_cliques_added = 0
         for node in nodes_to_add:
@@ -54,8 +64,10 @@ def generate_goal_positions(starts: list[tuple[int, int]], connectivity_graph: d
         else:
             level += 1
             if (informed):
+                # if doing an informed search: each time new cliques are generated, they are sorted using the heuristic (mean distance to all agents starting locations)
                 clique_lists[level] = sorted(clique_lists[level], key=lambda clique: get_max_cost(clique, keys_with_cost))
 
+    # if a clique of k nodes has been generated, the algorithm halts and it is returned
     if len(clique_lists[-1]) > 0:
         chosen_clique = clique_lists[-1][0]
 

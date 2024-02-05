@@ -6,6 +6,8 @@ import munkres
 LOCAL_SEARCH_TRAJECTORIES = 5
 
 def search_goals_assignment_hungarian(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    # the Hungarian algorithm is used to return an optimal agent-goal assignment
+    # cost for each couple (agent start, goal) is calculated with A*
     new_goals = []
     cost = 0
 
@@ -20,11 +22,13 @@ def search_goals_assignment_hungarian(map: list[list[bool]], starts: list[tuple[
     return new_goals, cost
 
 def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    # returns an assignment found with a local search, not garanteed to be optimal
     seed()
     new_goals = []
 
     path_length_matrix = get_path_length_matrix(map, starts, goal_positions)
     
+    # local search begins from a random assignments, then works to improve it
     initial_assignments_container = []
     for _ in range(LOCAL_SEARCH_TRAJECTORIES):
         initial_assignment = []
@@ -48,6 +52,8 @@ def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tup
     for i in range(LOCAL_SEARCH_TRAJECTORIES):
         candidate_assignments_container.append([initial_assignments_container[0]])
 
+    # multiple "trajectories" are considered:
+    # the local search starts from different random assignments, then the best outcome is chosen
     for traj in range(LOCAL_SEARCH_TRAJECTORIES):
 
         while (len(candidate_assignments_container[traj]) >= 1):
@@ -56,6 +62,7 @@ def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tup
             go_on = True
             while(go_on):
                 go_on = False
+                # the algorithm improves the assignment by switching indexes and checking if the cost has been reduced
                 for i in range(len(assignment)):
                     for j in range(i + 1, len(assignment)):
                         new_assignment = swap_assigment_indexes(assignment.copy(), i, j)
@@ -89,6 +96,7 @@ def search_goals_assignment_local_search(map: list[list[bool]], starts: list[tup
     return new_goals, final_cost
 
 def get_random_goal_assignment(map: list[list[bool]], starts: list[tuple[int, int]], goal_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    # returns a randomly generated agent-goal assignment
     seed()
     new_goals = []
     
