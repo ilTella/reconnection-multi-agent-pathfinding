@@ -24,17 +24,20 @@ def get_goal_positions(map: list[list[bool]], starts: list[tuple[int, int]], con
     goal_positions = []
 
     # a clique of nodes is generated using the requested algorithm
+    start_time = time.time()
     if args.goals_choice == GoalsChoice.UNINFORMED_GENERATION.name:
         goal_positions = generate_goal_positions(starts, connectivity_graph, informed=False)
     elif args.goals_choice == GoalsChoice.INFORMED_GENERATION.name:
         goal_positions = generate_goal_positions(starts, connectivity_graph, informed=True)
     else:
         raise(RuntimeError("Unknown goals choice algorithm."))
+    search_time = time.time() - start_time
 
     if len(goal_positions) < len(starts):
         raise(RuntimeError("This map doesn't have enough connected nodes for all its agents!"))
     
     if (args.verbose == False):
+        print("Goals generation time (s):    {:.2f}\n".format(search_time))
         return goal_positions
     
     # if verbose mode is on, additional info will be produced:
