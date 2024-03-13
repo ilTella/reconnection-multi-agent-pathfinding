@@ -17,12 +17,12 @@ If `--save_output` flag is set true, solutions will be saved in text files, insi
 
 ## Code organization
 
-Instances are saved as `.txt` files inside `.\custom_instances\`. Instances inside `.\instances` are taken from <a src="https://github.com/SvetaLadigin/robotics_mini_project">here</a>.
+Instances are saved as `.txt` files inside `.\custom_instances\`. Instances inside `.\instances` are taken from [here](https://github.com/SvetaLadigin/robotics_mini_project).
 
 Inside `.\connectivity_graphs\` there are the connectivity graphs associated with the problem instances. To be properly loaded by the solver, they must have the same name as the instance they refer to.
 
 `.\libraries\` contains code used to run the solver. `goals_choice.py` contains functions used to generate the set of goals; `goals_assignment.py` contains functions used to determine the agent-goal assignment.
-`cbs.py`, `single_agent_planner.py` and `visualize.py` are imported, without any modifying (except in a single marked occasion) from <a src="https://github.com/SvetaLadigin/robotics_mini_project">this repository</a>.
+`cbs.py`, `single_agent_planner.py` and `visualize.py` are imported, without any modifying (except in a single marked occasion) from [this repository](https://github.com/SvetaLadigin/robotics_mini_project).
 
 You can run `data_aggregator.py` to collect data from solved instances logs in `.\outputs\` and create charts. `.\charts\` contains charts made in this way.
 
